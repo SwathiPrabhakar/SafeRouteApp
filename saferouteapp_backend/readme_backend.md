@@ -4,11 +4,12 @@ python backend, uses gmaps api.
 
 In progress:
 
-type	path			input    			output    				description
-post	/login 			[u/p]				token					
-post 	/logout			[username]			Response 200
-post 	/routes 		[from, to] 			[routes_obj, score]]
-post 	/history 		[time, location]  	Response 200
+| type | path     | input          | output             | Description |
+| ---- | -------- | -------------- | ------------------ | ----------- |
+| post | /login   | [u/p]          | token              |             |
+| post | /logout  | username       | resp 200           |             |
+| post | /routes  | [from, to]     | routes_obj, score  |             |
+| post | /history | time, location | resp_200           |             |
 
 Todo:
 add login, logout, routes, history endpoints.
