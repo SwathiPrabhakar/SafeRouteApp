@@ -1,29 +1,20 @@
 from app import db
 
-from flask import Blueprint, g, jsonify
+from flask import Blueprint, g, jsonify, request
 
 from flask_restful import Api, Resource 
-from flask.ext.restful import abort, fields, marshal_with, reqparse
+from flask.ext.restful import abort, fields, marshal_with
 
 from app.base.decorators import login_required, has_permissions
 from app.routes.models import Route
 
+from webargs import fields, validate
+from webargs.flaskparser import use_args, use_kwargs, parser, abort
+from crime_helper import get_safe_routes_raw
+import json
+
 route_bp = Blueprint('route_api', __name__)
 api = Api(route_bp)
-
-route_fields = {
-    'id': fields.Integer,
-    'created': fields.DateTime,
-    'modified': fields.DateTime,
-    'title': fields.String,
-    'content': fields.String,
-    'slug': fields.String,
-}
-
-parser = reqparse.RequestParser()
-parser.add_argument('title', type=str)
-parser.add_argument('content', type=str)
-
 
 class Route(Resource):
 
@@ -31,7 +22,7 @@ class Route(Resource):
         # page = Page.query.filter_by(slug=slug).first()
         # if not page:
         #     abort(404, message="Page {} doesn't exist".format(slug))
-        # return page 
+        # return page
         r = {
             "content": "ndull", 
             "id": 0, 
@@ -40,20 +31,14 @@ class Route(Resource):
         }
         return jsonify(r)
 
-    @marshal_with(route_fields)
-    def post(self):
-        # page = Page.query.filter_by(slug=slug).first()
-        # if not page:
-        #     abort(404, message="Page {} doesn't exist".format(slug))
-        # return page
-        parsed_args = parser.parse_args()
-        # print(parse_args)
-        r = {
-            "content": "ndull", 
-            "id": 1, 
-            "slug": "ndull", 
-            "title": "ndull"
-        }
-        return parsed_args
+    add_args = {
+        'frm': fields.String(required=True),
+        'to': fields.String(required=True),
+    }
+
+    @use_kwargs(add_args)
+    def post(self, frm, to):
+        routes = get_safe_routes_raw(frm, to)
+        return json.dumps(routes)
 
 api.add_resource(Route, '/')

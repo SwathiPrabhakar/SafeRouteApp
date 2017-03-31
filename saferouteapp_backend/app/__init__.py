@@ -4,11 +4,16 @@ from flask_restful import Api
 from flask.ext.restful import abort
 from flask.ext.migrate import Migrate
 from flask.ext.cors import CORS
+import googlemaps
 
 app = flask.Flask(__name__)
 app.config.from_object('config')
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
+
+key = 'AIzaSyDmNBpYDBoxkwYTW5Aw9H3YrEXaSi-tnAo'
+gmaps = googlemaps.Client(key=key)
+
 
 CORS(app, resources=r'/*', allow_headers='*')
 

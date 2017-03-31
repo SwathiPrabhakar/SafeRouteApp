@@ -1,5 +1,7 @@
-key = 'AIzaSyDmNBpYDBoxkwYTW5Aw9H3YrEXaSi-tnAo'
-gmaps = googlemaps.Client(key=key)
+from app import gmaps
+import requests
+import pandas as pd
+import pdb
 
 def query(slat, slong, dlat, dlong):
     baseurl = 'https://maps.googleapis.com/maps/api/directions/json?'
@@ -30,7 +32,11 @@ def get_safe_routes(frm="33.416565,-111.925015", to="33.418000, -111.931827"):
             events += query_crime(coords[0], coords[1])
         print(events)
         scores.append(events) # / len(coords))
-    return scores
+    # return scores
+    routes_with_score = []
+    for index, r in enumerate(routes):
+        routes_with_score.append([scores[index], r])
+    return routes_with_score
 
 def query_crime(lat, lng, shape='within_circle', rad=500, s_date='2015-01-01', e_date='2015-10-01', granular='ym'):
     # api usage reference http://www.racketracer.com/2015/10/19/most-frequented-crimes-in-san-francisco-normalized-by-neighborhood/
@@ -46,10 +52,13 @@ def query_crime(lat, lng, shape='within_circle', rad=500, s_date='2015-01-01', e
 query_crime(37.757396, -122.492781)
 q = ["37.293089, -122.213628", "37.318691, -122.088144"]
 
-a, b = get_lat_long("Cupertino Library, 10800 Torre Ave, Cupertino, CA 95014"), get_lat_long("Amphitheatre Pkwy, Mountain View, CA 94043")
-get_safe_routes(a, b)
 
+def get_safe_routes_raw(frm, to):
+    a, b = get_lat_long(frm), get_lat_long(to)
+    return get_safe_routes(a, b)
 
+  # a, b = get_lat_long("Cupertino Library, 10800 Torre Ave, Cupertino, CA 95014"), get_lat_long("Amphitheatre Pkwy, Mountain View, CA 94043")
+  #   get_safe_routes(a, b)
 # query_string("33.416565", "-111.925015", "33.416207", "-111.922558")
 
 # url = query_crime('within_circle', 500, 37.757396, -122.492781, '2015-01-01', '2015-10-01','ym')
