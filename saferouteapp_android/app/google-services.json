@@ -1,0 +1,79 @@
+{
+  "project_info": {
+    "project_number": "563201685331",
+    "project_id": "mcsaferoute-1490305228152"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:563201685331:android:b19fb4454f17e8bf",
+        "android_client_info": {
+          "package_name": "com.saferoutesapp.app.saferoutesapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "563201685331-sih803c84uc1c6djl8k42sp5bhpf8jrd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAlVn98NBcojafhDQGnQ-jttYawUiZCXyE"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 1
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:563201685331:android:4029a6906365b102",
+        "android_client_info": {
+          "package_name": "com.saferoutesapp.saferoutesapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "563201685331-sih803c84uc1c6djl8k42sp5bhpf8jrd.apps.googleusercontent.com",
+          "client_type": 3
+        },
+        {
+          "client_id": "563201685331-2f660qfkskppbu90qct2jjavcajoh60h.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.saferoutesapp.saferoutesapp",
+            "certificate_hash": "2153fb30aa41d5517b72a1916f88e797cd276cf0"
+          }
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAlVn98NBcojafhDQGnQ-jttYawUiZCXyE"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 1
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

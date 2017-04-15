@@ -84,3 +84,5 @@ class User(Base):
             return None # invalid token
         user = User.query.get(data['id'])
         return user
+
+# LEts use this for android oauth http://flask.pocoo.org/snippets/125/
