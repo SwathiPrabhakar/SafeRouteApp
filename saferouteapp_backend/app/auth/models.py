@@ -88,23 +88,23 @@ class User(Base):
 
     @staticmethod
     def validate_token(access_token):
-    '''Verifies that an access-token is valid and
-    meant for this app.
+    # '''Verifies that an access-token is valid and
+    # meant for this app.
 
-    Returns None on fail, and an e-mail on success'''
-    h = httplib2.Http()
-    resp, cont = h.request("https://www.googleapis.com/oauth2/v2/userinfo",
-                           headers={'Host': 'www.googleapis.com',
-                                    'Authorization': access_token})
+    # Returns None on fail, and an e-mail on success'''
+        h = httplib2.Http()
+        resp, cont = h.request("https://www.googleapis.com/oauth2/v2/userinfo",
+                               headers={'Host': 'www.googleapis.com',
+                                        'Authorization': access_token})
 
-    if not resp['status'] == '200':
-        return None
+        if not resp['status'] == '200':
+            return None
 
-    try:
-        data = json.loads(cont)
-    except TypeError:
-        data = json.loads(cont.decode())
+        try:
+            data = json.loads(cont)
+        except TypeError:
+            data = json.loads(cont.decode())
 
-    return data['email']
+        return data['email']
 
 # reference LEts use this for android oauth http://flask.pocoo.org/snippets/  125/

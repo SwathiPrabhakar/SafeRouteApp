@@ -39,6 +39,6 @@ class Route(Resource):
     @use_kwargs(add_args)
     def post(self, frm, to):
         routes = get_safe_routes_raw(frm, to)
-        return json.dumps(routes)
+        return routes
 
 api.add_resource(Route, '/')

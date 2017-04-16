@@ -51,16 +51,16 @@ def query_crime(lat, lng, shape='within_circle', rad=500, s_date='2015-01-01', e
         return 0
     return df.count()[0]
 
-query_crime(37.757396, -122.492781)
-q = ["37.293089, -122.213628", "37.318691, -122.088144"]
+# query_crime(37.757396, -122.492781)
+# q = ["37.293089, -122.213628", "37.318691, -122.088144"]
 
 
 def get_safe_routes_raw(frm, to):
     a, b = get_lat_long(frm), get_lat_long(to)
     return get_safe_routes(a, b)
 
-a, b = get_lat_long("Cupertino Library, 10800 Torre Ave, Cupertino, CA 95014"), get_lat_long("Amphitheatre Pkwy, Mountain View, CA 94043")
-get_safe_routes(a, b)
+# a, b = get_lat_long("Cupertino Library, 10800 Torre Ave, Cupertino, CA 95014"), get_lat_long("Amphitheatre Pkwy, Mountain View, CA 94043")
+# get_safe_routes(a, b)
 # query_string("33.416565", "-111.925015", "33.416207", "-111.922558")
 
 # url = query_crime('within_circle', 500, 37.757396, -122.492781, '2015-01-01', '2015-10-01','ym')
