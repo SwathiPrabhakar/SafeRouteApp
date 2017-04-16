@@ -2,6 +2,7 @@ from app import gmaps
 import requests
 import pandas as pd
 import pdb
+import datetime
 
 def query(slat, slong, dlat, dlong):
     baseurl = 'https://maps.googleapis.com/maps/api/directions/json?'
@@ -16,7 +17,8 @@ def get_safe_routes(frm="33.416565,-111.925015", to="33.418000, -111.931827"):
     """
     todo: fix better metric, parallelize calls to query_crime with async
     """
-    routes = gmaps.directions(frm, to, alternatives=True, mode="driving")
+    departure_time = datetime.datetime.now()
+    routes = gmaps.directions(frm, to, alternatives=True, mode="driving", departure_time=departure_time )
     route_coords = []
     scores = []
     for route in routes:
@@ -57,8 +59,8 @@ def get_safe_routes_raw(frm, to):
     a, b = get_lat_long(frm), get_lat_long(to)
     return get_safe_routes(a, b)
 
-  # a, b = get_lat_long("Cupertino Library, 10800 Torre Ave, Cupertino, CA 95014"), get_lat_long("Amphitheatre Pkwy, Mountain View, CA 94043")
-  #   get_safe_routes(a, b)
+a, b = get_lat_long("Cupertino Library, 10800 Torre Ave, Cupertino, CA 95014"), get_lat_long("Amphitheatre Pkwy, Mountain View, CA 94043")
+get_safe_routes(a, b)
 # query_string("33.416565", "-111.925015", "33.416207", "-111.922558")
 
 # url = query_crime('within_circle', 500, 37.757396, -122.492781, '2015-01-01', '2015-10-01','ym')

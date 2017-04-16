@@ -4,6 +4,7 @@ from app.base.models import Base
 from passlib.hash import pbkdf2_sha256
 from itsdangerous import (TimedJSONWebSignatureSerializer
                           as Serializer, BadSignature, SignatureExpired)
+import httplib2
 
 assoc = db.Table(
     'auth_perm_assoc',
@@ -85,4 +86,25 @@ class User(Base):
         user = User.query.get(data['id'])
         return user
 
-# LEts use this for android oauth http://flask.pocoo.org/snippets/125/
+    @staticmethod
+    def validate_token(access_token):
+    '''Verifies that an access-token is valid and
+    meant for this app.
+
+    Returns None on fail, and an e-mail on success'''
+    h = httplib2.Http()
+    resp, cont = h.request("https://www.googleapis.com/oauth2/v2/userinfo",
+                           headers={'Host': 'www.googleapis.com',
+                                    'Authorization': access_token})
+
+    if not resp['status'] == '200':
+        return None
+
+    try:
+        data = json.loads(cont)
+    except TypeError:
+        data = json.loads(cont.decode())
+
+    return data['email']
+
+# reference LEts use this for android oauth http://flask.pocoo.org/snippets/  125/

@@ -17,7 +17,7 @@ route_bp = Blueprint('route_api', __name__)
 api = Api(route_bp)
 
 class Route(Resource):
-
+    # @login_required
     def get(self):
         # page = Page.query.filter_by(slug=slug).first()
         # if not page:

@@ -13,8 +13,11 @@ import android.view.View;
 
 public class InputActivity extends AppCompatActivity{
     protected void onCreate(Bundle savedInstanceState) {
+//        Intent i = new Intent(this, RegistrationService.class);
+//        startService(i);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.input_activity);
+
     }
     @Override
     public boolean onCreateOptionsMenu(Menu menu){
