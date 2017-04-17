@@ -17,7 +17,6 @@ route_bp = Blueprint('route_api', __name__)
 api = Api(route_bp)
 
 class Route(Resource):
-
     add_args = {
         'frm': fields.String(required=True),
         'to': fields.String(required=True),

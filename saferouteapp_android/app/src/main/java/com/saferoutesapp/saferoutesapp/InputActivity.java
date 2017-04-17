@@ -38,10 +38,11 @@ public class InputActivity extends AppCompatActivity{
     private LatLng dest;
 
     protected void onCreate(Bundle savedInstanceState) {
+//        Intent i = new Intent(this, RegistrationService.class);
+//        startService(i);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.input_activity);
         from_input = (TextView) findViewById(R.id.from_input);
-        from_input.setText("hola");
         if(!runtime_permissions())
             enable_buttons();
     }
@@ -123,7 +124,6 @@ public class InputActivity extends AppCompatActivity{
         intent.putExtra("bundle", args);
 
         startActivity(intent);
-
 
     }
 }

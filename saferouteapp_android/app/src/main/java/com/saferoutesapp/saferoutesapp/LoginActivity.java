@@ -106,7 +106,8 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
 
             //Displaying name and email
             textViewName.setText(acct.getDisplayName());
-            textViewEmail.setText(acct.getEmail());
+
+            textViewEmail.setText(acct.getIdToken());
 
             //Initializing image loader
             imageLoader = CustomVolleyRequest.getInstance(this.getApplicationContext())
