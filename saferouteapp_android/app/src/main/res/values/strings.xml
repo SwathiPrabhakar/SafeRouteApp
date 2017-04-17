@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">SafeRoutesApp</string>
     <string name="title_activity_maps">Map</string>
+    <string name="title_activity_gps">GPS</string>
 </resources>
