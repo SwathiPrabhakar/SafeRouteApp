@@ -69,7 +69,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         MarkerPoints.add(dest);
 
 
-        /*
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         //Location loc = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
@@ -100,7 +99,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         //locationManager.requestLocationUpdates("gps", 0, 0, locationListener);
 
-        */
 
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
@@ -315,7 +313,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         // Building the url to the web service
         //http://127.0.0.1:5000/routes/?frm=33.416565,-111.925015&to=33.418000, -111.931827
-        String url = "http://192.168.0.20:5000/routes?" + parameters;
+        String url = "http://35.160.206.91:5000/routes?" + parameters;
         //return "http://ziptasticapi.com/85281";
         return url;
     }
