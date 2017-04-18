@@ -3,27 +3,36 @@ package com.saferoutesapp.saferoutesapp;
 /**
  * Created by amrit on 4/15/17.
  */
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.support.v7.app.AppCompatActivity;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.TextView;
+import android.widget.Toast;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.ImageLoader;
+import com.android.volley.toolbox.NetworkImageView;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
+import com.google.android.gms.auth.api.Auth;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.auth.api.signin.GoogleSignInResult;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.SignInButton;
+import com.google.android.gms.common.api.GoogleApiClient;
 
-        import android.content.Intent;
-        import android.support.v7.app.AppCompatActivity;
-        import android.os.Bundle;
-        import android.util.Log;
-        import android.view.View;
-        import android.widget.TextView;
-        import android.widget.Toast;
+import org.json.JSONException;
+import org.w3c.dom.Text;
 
-        import com.android.volley.toolbox.ImageLoader;
-        import com.android.volley.toolbox.NetworkImageView;
-        import com.google.android.gms.auth.api.Auth;
-        import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
-        import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
-        import com.google.android.gms.auth.api.signin.GoogleSignInResult;
-        import com.google.android.gms.common.ConnectionResult;
-        import com.google.android.gms.common.SignInButton;
-        import com.google.android.gms.common.api.GoogleApiClient;
-
-        import org.w3c.dom.Text;
+import java.util.HashMap;
+import java.util.Map;
 
 public class LoginActivity extends AppCompatActivity implements View.OnClickListener, GoogleApiClient.OnConnectionFailedListener {
 
@@ -46,6 +55,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
 
     //Image Loader
     private ImageLoader imageLoader;
+    public static final String MY_PREFS = "saferoutes";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -137,6 +147,38 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
             signIn();
         }
     }
+
+    public void handleBackendSignIn(Context context, final String email, final String id){
+        RequestQueue queue = Volley.newRequestQueue(context);
+        StringRequest sr = new StringRequest(Request.Method.POST,"http:// /register/", new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                System.out.println("Posted This is the response");
+                String token  = new String(response);
+                System.out.println(token);
+                SharedPreferences.Editor editor = getSharedPreferences(MY_PREFS, MODE_PRIVATE).edit();
+                editor.putString("authtoken", token);
+                editor.commit();
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                //    postUsernameResponse.requestEndedWithError(error);
+            }
+        }){
+            @Override
+            protected Map<String,String> getParams(){
+                Map<String,String> params = new HashMap<String, String>();
+                params.put("email", email);
+                params.put("uid", id);
+                return params;
+            }
+
+        };
+        queue.add(sr);
+    }
+
+
 
     @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {

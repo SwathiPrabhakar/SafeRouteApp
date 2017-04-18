@@ -17,28 +17,30 @@ route_bp = Blueprint('route_api', __name__)
 api = Api(route_bp)
 
 class Route(Resource):
-    # @login_required
-    def get(self):
-        # page = Page.query.filter_by(slug=slug).first()
-        # if not page:
-        #     abort(404, message="Page {} doesn't exist".format(slug))
-        # return page
-        r = {
-            "content": "ndull", 
-            "id": 0, 
-            "slug": "ndull", 
-            "title": "ndull"
-        }
-        return jsonify(r)
-
     add_args = {
         'frm': fields.String(required=True),
         'to': fields.String(required=True),
     }
 
     @use_kwargs(add_args)
+    def get(self, frm, to):
+        # page = Page.query.filter_by(slug=slug).first()
+        # if not page:
+        #     abort(404, message="Page {} doesn't exist".format(slug))
+        # return page
+        # r = {
+        #     "content": "ndull", 
+        #     "id": 0, 
+        #     "slug": "ndull", 
+        #     "title": "ndull"
+        # }
+        routes = get_safe_routes_raw(frm, to)
+        return routes
+        #return jsonify(r)
+
+    @use_kwargs(add_args)
     def post(self, frm, to):
         routes = get_safe_routes_raw(frm, to)
         return routes
 
-api.add_resource(Route, '/')
+api.add_resource(Route, '')

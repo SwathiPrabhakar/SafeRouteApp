@@ -37,8 +37,10 @@ def get_safe_routes(frm="33.416565,-111.925015", to="33.418000, -111.931827"):
     # return scores
     routes_with_score = []
     for index, r in enumerate(routes):
-        routes_with_score.append([scores[index], r])
-    return routes_with_score
+        routes_with_score.append({"score":scores[index], "route":r})
+    final_score = {}
+    final_score["routes"] = routes_with_score
+    return final_score
 
 def query_crime(lat, lng, shape='within_circle', rad=500, s_date='2015-01-01', e_date='2015-10-01', granular='ym'):
     # api usage reference http://www.racketracer.com/2015/10/19/most-frequented-crimes-in-san-francisco-normalized-by-neighborhood/

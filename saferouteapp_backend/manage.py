@@ -8,4 +8,5 @@ manager.add_command('runserver', Server())
 manager.add_command('db', MigrateCommand)
 
 if __name__ == '__main__':
-    manager.run()
+	app.run(host='0.0.0.0')
+	manager.run()

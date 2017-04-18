@@ -87,5 +87,5 @@ class BlogPostList(Resource):
         return post, 201
 
 
-api.add_resource(BlogPostDetail, '/<string:slug>')
-api.add_resource(BlogPostList, '/')
+# api.add_resource(BlogPostDetail, '/<string:slug>')
+# api.add_resource(BlogPostList, '/')

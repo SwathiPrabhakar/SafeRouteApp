@@ -1,5 +1,7 @@
 <resources>
     <string name="app_name">SafeRoutesApp</string>
     <string name="title_activity_maps">Map</string>
+    <string name="title_activity_gps">GPS</string>
     <string name="gcm_defaultSenderId">563201685331</string>
+    <string name="autocomplete_api_key">AIzaSyDmNBpYDBoxkwYTW5Aw9H3YrEXaSi-tnAo</string>
 </resources>
