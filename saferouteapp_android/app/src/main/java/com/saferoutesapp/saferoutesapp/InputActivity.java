@@ -66,19 +66,15 @@ public class InputActivity extends AppCompatActivity{
     private LocationManager locationManager;
     private LatLng src=null;
     private LatLng dest=null;
-    private String destPlaceID=null;
     private Geocoder geocoder;
     private AutoCompleteTextView sourceACTextView;
     private AutoCompleteTextView destinationACTextView;
     private ArrayList<String> placeIDs;
-    private GoogleApiClient mGoogleApiClient;
+
 
     protected void onCreate(Bundle savedInstanceState) {
-//        Intent i = new Intent(this, RegistrationService.class);
-//        startService(i);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.input_activity);
-        mGoogleApiClient =  new GoogleApiClient.Builder(this).addApi(Places.GEO_DATA_API).addApi(Places.PLACE_DETECTION_API).build();
 
         placeIDs = new ArrayList<>();
         from_input = (TextView) findViewById(R.id.from_input);
@@ -94,11 +90,7 @@ public class InputActivity extends AppCompatActivity{
         destinationACTextView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                // Get data associated with the specified position
-                // in the list (AdapterView)
-                //((LatLng)parent.getSelectedItem())
                 String description = (String) parent.getItemAtPosition(position);
-                destPlaceID = placeIDs.get(position).trim();
                 List<Address> addressList;
                 try {
                     addressList = geocoder.getFromLocationName(description, 1);
