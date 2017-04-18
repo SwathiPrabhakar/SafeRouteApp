@@ -9,6 +9,7 @@
     android:paddingTop="16dp"
     android:paddingBottom="16dp"
     tools:context="com.saferoutesapp.saferoutesapp.MapsActivity">
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -75,6 +76,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="Alert a Friend"
+        android:onClick="onAlertFriend"
         android:id="@+id/alertFriend"
         android:layout_alignParentBottom="true"
         android:layout_weight="1"

@@ -3,6 +3,8 @@ package com.saferoutesapp.saferoutesapp;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -10,6 +12,12 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 import com.google.android.gms.appindexing.Action;
 import com.google.android.gms.appindexing.AppIndex;
 import com.google.android.gms.appindexing.Thing;
@@ -19,6 +27,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
 
@@ -39,6 +48,8 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
@@ -48,6 +59,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private LocationManager locationManager;
     final private String TAG = "MapsActivity";
     ArrayList<LatLng> MarkerPoints;
+    public String starredLocationEnabled = "false";
 
     /**
      * ATTENTION: This was auto-generated to implement the App Indexing API.
@@ -106,6 +118,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         // ATTENTION: This was auto-generated to implement the App Indexing API.
         // See https://g.co/AppIndexing/AndroidStudio for more information.
         client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
+        //Checking acitivity initiated from starred location
+        if (getIntent().hasExtra("starredLocationEnabled")) {
+            starredLocationEnabled = getIntent().getStringExtra("starredLocationEnabled");
+            if (starredLocationEnabled == null) {
+                Log.e("starredLocationEnabled", "null");
+
+            }
+        }
 
     }
 
@@ -123,35 +143,101 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
 
-        // Add markers
-        LatLng src = MarkerPoints.get(0);
-        LatLng dest = MarkerPoints.get(1);
-        // mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
-        mMap.addMarker(new MarkerOptions().position(src));
-        mMap.addMarker(new MarkerOptions().position(dest));
+        // Add a marker in Sydney and move the camera
+        Bundle bundle = getIntent().getParcelableExtra("bundle");
+        LatLng starred_position = bundle.getParcelable("starred_position");
+        String starred_address = bundle.getString("starred_address");
 
-        // Getting URL to the Google Directions API
-        String url = getUrl(src, dest);
-        Log.d(TAG, url.toString());
-        FetchUrl FetchUrl = new FetchUrl();
+        if(starred_position != null){
+            System.out.println(starred_address);
+            System.out.println(starred_position);
+            mMap.addMarker(new MarkerOptions().position(starred_position).title(starred_address));
+            mMap.moveCamera(CameraUpdateFactory.newLatLng(starred_position));
+        }
+        else {
+            // Add markers
+            LatLng src = MarkerPoints.get(0);
+            LatLng dest = MarkerPoints.get(1);
+            // mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
+            mMap.addMarker(new MarkerOptions().position(src));
+            mMap.addMarker(new MarkerOptions().position(dest));
 
-        // Start downloading json data from Google Directions API
-        FetchUrl.execute(url);
-        //move map camera
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(src));
-        mMap.animateCamera(CameraUpdateFactory.zoomTo(11));
+            // Getting URL to the Google Directions API
+            String url = getUrl(src, dest);
+            Log.d(TAG, url.toString());
+            FetchUrl FetchUrl = new FetchUrl();
 
+            // Start downloading json data from Google Directions API
+            FetchUrl.execute(url);
+            //move map camera
+            mMap.moveCamera(CameraUpdateFactory.newLatLng(src));
+            mMap.animateCamera(CameraUpdateFactory.zoomTo(11));
+        }
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
             return;
         }
         mMap.setMyLocationEnabled(true);
+    }
+
+    public void onMapClick(final LatLng latLng) {
+
+
+        //Getting address for Marker which will be set as title
+        String markerTitle = "";
+        Geocoder geocoder = new Geocoder(getApplicationContext(), Locale.US);
+        try {
+            List<Address> addresses = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1);
+            Address markerAddress = null;
+            if (addresses.size() > 0) {
+                markerAddress = addresses.get(0);
+            }
+            if (markerAddress == null && latLng != null) {
+                markerTitle = latLng.toString();
+                Toast.makeText(this, latLng.toString(), Toast.LENGTH_SHORT).show();
+            } else {
+                markerTitle = markerAddress.getThoroughfare();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        System.out.println(markerTitle);
+        mMap.addMarker(new MarkerOptions().position(latLng).title(markerTitle));
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
+
+        /*
+        Send Post Request to Backend
+        {"place":{"lat":"37.4220","long":"-122.0841"}}
+         */
+        RequestQueue queue = Volley.newRequestQueue(this);
+        StringRequest sr = new StringRequest(Request.Method.POST, "https://api.myjson.com/bins/si253/starred",
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        System.out.println("Posted This is the response");
+                        System.out.println(response);
+                    }
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                System.out.println(error.toString());
+                System.out.println(error.getMessage());
+            }
+        }) {
+            @Override
+            protected Map<String, String> getParams() {
+                Map<String, String> params = new HashMap<String, String>();
+                if (latLng != null) {
+                    params.put("latitude", Double.toString(latLng.latitude));
+                    params.put("latitude", Double.toString(latLng.longitude));
+                } else {
+                    params.put("latitude", Double.toString(0.0));
+                    params.put("latitude", Double.toString(0.0));
+                }
+                return params;
+            }
+        };
+        queue.add(sr);
     }
 
     private class FetchUrl extends AsyncTask<String, Void, String> {
@@ -353,4 +439,5 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         AppIndex.AppIndexApi.end(client, getIndexApiAction());
         client.disconnect();
     }
+
 }

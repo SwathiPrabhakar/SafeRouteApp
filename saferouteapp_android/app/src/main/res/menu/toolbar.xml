@@ -2,12 +2,12 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
-        android:id="@+id/MenuStarredLocations"
-        android:title="Starred Locations"
+        android:id="@+id/AddStarredLocations"
+        android:title="Star a Location"
         app:showAsAction="never"/>
     <item
-        android:id="@+id/Option2"
-        android:title="Option 2"
+        android:id="@+id/listStarredLocations"
+        android:title="List Starred Locations"
         app:showAsAction="never"/>
     <item
         android:id="@+id/Option3"

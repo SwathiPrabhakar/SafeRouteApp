@@ -9,6 +9,7 @@ import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
@@ -18,6 +19,7 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.content.BroadcastReceiver;
 import android.widget.AdapterView;
@@ -30,6 +32,12 @@ import android.util.Log;
 import android.Manifest;
 import android.widget.Toast;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 import com.google.android.gms.appindexing.AppIndex;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResultCallback;
@@ -70,6 +78,8 @@ public class InputActivity extends AppCompatActivity{
     private AutoCompleteTextView sourceACTextView;
     private AutoCompleteTextView destinationACTextView;
     private ArrayList<String> placeIDs;
+    static ArrayList<String> addresses = new ArrayList<String>();
+    static ArrayList<LatLng> locations = new ArrayList<>();
 
 
     protected void onCreate(Bundle savedInstanceState) {
@@ -201,6 +211,114 @@ public class InputActivity extends AppCompatActivity{
         startActivity(intent);
 
     }
+    //Handling Menu Item Selections
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle item selection
+        switch (item.getItemId()) {
+            case R.id.AddStarredLocations:
+                addStarredLocation();
+                return true;
+            case R.id.listStarredLocations:
+                parseStarredLocations();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+    public void onAlertFriend(View v) {
+        System.out.println("Alerting a Friend");
+        String messageAlert = "Alerting my friend";
+        //Get last known location --> mLastLocation
+        getCurrentLocation();
+/*        LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+        if (locationManager != null) {
+            if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                return;
+            }
+            Location lastKnownLocationGPS = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+            if (lastKnownLocationGPS != null) {
+                messageAlert += lastKnownLocationGPS.toString();
+            } else {
+                Location loc =  locationManager.getLastKnownLocation(LocationManager.PASSIVE_PROVIDER);
+                if(loc!=null)
+                    messageAlert += loc.toString();
+            }
+        }*/
+        System.out.println(messageAlert);
+
+        //Intiate a "New message" activity
+        Intent intentt = new Intent(Intent.ACTION_VIEW);
+        intentt.setData(Uri.parse("sms:"));
+        intentt.setType("vnd.android-dir/mms-sms");
+        intentt.putExtra(Intent.EXTRA_TEXT, "");
+        intentt.putExtra("sms_body", messageAlert);
+        startActivityForResult(Intent.createChooser(intentt, ""), 0);
+    }
+
+    private void parseStarredLocations() {
+        RequestQueue queue = Volley.newRequestQueue(this);
+        StringRequest stringRequest = new StringRequest(Request.Method.GET, "https://api.myjson.com/bins/m68r3",
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        parseStarredLocationsJson(response);
+                    }
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                System.out.println(error.toString());
+                System.out.println(error.getMessage());
+            }
+        });
+        // Add the request to the RequestQueue.
+        queue.add(stringRequest);
+    }
+
+    private void addStarredLocation() {
+        Intent intent = new Intent(this, MapsActivity.class);
+        intent.putExtra("starredLocationEnabled", "set");
+        startActivity(intent);
+    }
+
+    public void parseStarredLocationsJson(String result) {
+        System.out.println("Parsing JSON - getting list of starred locations");
+        JSONObject json;
+        try{
+            /*
+            Format of returning json object: {"places" : [
+                {"lat":"123.43", "long":"-30.90", "place":"AddressABC"},
+                {"lat":"23.21", "long":"98.30", "place":"AddressEFG"}
+                ]}
+             */
+            json = new JSONObject(result);
+            JSONArray jsonPlaces = json.getJSONArray("places");
+            LatLng getLocation;
+            String getAdrress;
+            if(jsonPlaces.length() > 0){
+                //Clear previous values
+                addresses.clear();
+                locations.clear();
+            }
+            for (int j = 0; j < jsonPlaces.length(); j++) {
+                JSONObject jsonobject = jsonPlaces.getJSONObject(j);
+                getLocation = new LatLng( Double.parseDouble(jsonobject.getString("lat")), Double.parseDouble(jsonobject.getString("long")));
+                getAdrress = jsonobject.getString("place");
+                System.out.println(getLocation.toString() + "  - " + getAdrress);
+                addresses.add(getAdrress);
+                locations.add(getLocation);
+            }
+            Intent intent = new Intent(this, StarredLocationsActivity.class);
+            startActivity(intent);
+        }catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public Object getCurrentLocation() {
+        return null;
+    }
+
 
     class PlaceAPI {
 

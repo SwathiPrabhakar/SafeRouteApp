@@ -38,27 +38,27 @@
             android:value="@string/google_maps_key" />
 
         <activity
-            android:name=".LoginActivity"
-            android:label="@string/title_activity_maps">
+            android:name=".InputActivity"
+            android:label="Safe Routes">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity><!-- ATTENTION: This was auto-generated to add Google Play services to your project for
-     App Indexing.  See https://g.co/AppIndexing/AndroidStudio for more information. -->
+        </activity>
         <activity
-            android:name=".InputActivity"
-            android:label="Safe Routes">
-        </activity><!-- ATTENTION: This was auto-generated to add Google Play services to your project for
-     App Indexing.  See https://g.co/AppIndexing/AndroidStudio for more information. -->
+            android:name=".LoginActivity"
+            android:label="@string/title_activity_maps">
+        </activity>
         <activity
             android:name=".MapsActivity"
             android:label="@string/title_activity_maps">
         </activity>
+        <activity
+            android:name=".StarredLocationsActivity"
+            android:label="Starred Locations">
+        </activity>
 
-        <!-- ATTENTION: This was auto-generated to add Google Play services to your project for
-     App Indexing.  See https://g.co/AppIndexing/AndroidStudio for more information. -->
         <meta-data
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
