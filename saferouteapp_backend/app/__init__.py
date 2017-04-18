@@ -27,6 +27,8 @@ from app.blog.resources import blog_bp
 from app.auth.resources import auth_bp
 from app.pages.resources import page_bp
 from app.routes.resources import route_bp
+from app.starred.resources import starred_bp
+
 
 
 app.register_blueprint(
@@ -47,4 +49,9 @@ app.register_blueprint(
 app.register_blueprint(
     route_bp,
     url_prefix='/routes'
+)
+
+app.register_blueprint(
+    starred_bp,
+    url_prefix='/starred'
 )
