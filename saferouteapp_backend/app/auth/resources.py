@@ -8,6 +8,7 @@ from app.auth.models import Permission, User
 from app.base.decorators import login_required
 from webargs import fields, validate
 from webargs.flaskparser import use_args, use_kwargs, parser, abort
+import pdb
 
 auth_bp = Blueprint('auth_api', __name__)
 api = Api(auth_bp)
@@ -118,7 +119,8 @@ class Register(UserBase):
 
     @use_kwargs(add_args)
     def post(self, email, uid):
-        user = User.query.get(data['uid'])
+        # todo store and verify uid 
+        user = User.query.filter_by(username=email).first()
         if not user:
             user = User(
                 username=email
@@ -131,16 +133,15 @@ class Register(UserBase):
         # return uid, 201
 
 class AuthToken(UserBase):
-
-    token_parser = reqparse.RequestParser()
-    token_parser.add_argument('username', type=str)
-    token_parser.add_argument('password', type=str)
-
-    @marshal_with(token_fields)
+    add_args = {
+        'email': fields.String(required=True),
+        'uid': fields.String(required=True),
+    }
+    @use_kwargs(add_args)
     def post(self):
         args = self.token_parser.parse_args()
-        user = self.get_user(args['email']) 
-        if user.check_password(args['uid']):
+        user = self.get_user(email) 
+        if user.check_password(uid):
             token = user.generate_auth_token()
             return {'token': token.decode('ascii')}, 200
         else:

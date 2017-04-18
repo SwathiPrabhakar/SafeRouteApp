@@ -12,11 +12,14 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
+import com.android.volley.VolleyLog;
 import com.android.volley.toolbox.ImageLoader;
+import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.NetworkImageView;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
@@ -29,6 +32,7 @@ import com.google.android.gms.common.SignInButton;
 import com.google.android.gms.common.api.GoogleApiClient;
 
 import org.json.JSONException;
+import org.json.JSONObject;
 import org.w3c.dom.Text;
 
 import java.util.HashMap;
@@ -133,6 +137,8 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
 
             //Loading image
             profilePhoto.setImageUrl(acct.getPhotoUrl().toString(), imageLoader);
+            handleBackendSignIn(this, acct.getEmail(), acct.getId());
+//            dummyGetWithToken(this);
 
         } else {
             //If login fails
@@ -147,35 +153,97 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
             signIn();
         }
     }
-
-    public void handleBackendSignIn(Context context, final String email, final String id){
+    public void dummyGetWithToken(final Context context){
         RequestQueue queue = Volley.newRequestQueue(context);
-        StringRequest sr = new StringRequest(Request.Method.POST,"http:// /register/", new Response.Listener<String>() {
-            @Override
-            public void onResponse(String response) {
-                System.out.println("Posted This is the response");
-                String token  = new String(response);
-                System.out.println(token);
-                SharedPreferences.Editor editor = getSharedPreferences(MY_PREFS, MODE_PRIVATE).edit();
-                editor.putString("authtoken", token);
-                editor.commit();
-            }
-        }, new Response.ErrorListener() {
+
+        JsonObjectRequest req = new JsonObjectRequest("http://49e6f37e.ngrok.io/blog/", null,
+                new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        try {
+                            VolleyLog.v("Response:%n %s", response.toString(4));
+                            System.out.print(response.toString());
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
-                //    postUsernameResponse.requestEndedWithError(error);
-            }
-        }){
-            @Override
-            protected Map<String,String> getParams(){
-                Map<String,String> params = new HashMap<String, String>();
-                params.put("email", email);
-                params.put("uid", id);
-                return params;
+                VolleyLog.e("Error: ", error.getMessage());
             }
 
+
+        }) {
+            public Map<String, String> getHeaders() throws AuthFailureError{
+                HashMap<String, String> headers = new HashMap<String, String>();
+                SharedPreferences prefs = getSharedPreferences(MY_PREFS, MODE_PRIVATE);
+                String token = prefs.getString("authtoken", null);
+                System.out.print(token.toString());
+                headers.put("Authorization", "Token " + token);
+                return headers;
+            }
         };
-        queue.add(sr);
+        queue.add(req);
+
+    }
+
+    public void handleBackendSignIn(final Context context, final String email, final String id){
+        RequestQueue queue = Volley.newRequestQueue(context);
+//        StringRequest sr = new StringRequest(Request.Method.POST,"http://49e6f37e.ngrok.io/blog/", new Response.Listener<String>() {
+//            @Override
+//            public void onResponse(String response) {
+//                System.out.println("Posted This is the response");
+//                String token  = new String(response);
+//                System.out.println(token);
+//                SharedPreferences.Editor editor = getSharedPreferences(MY_PREFS, MODE_PRIVATE).edit();
+//                editor.putString("authtoken", token);
+//                editor.commit();
+//            }
+//        }, new Response.ErrorListener() {
+//            @Override
+//            public void onErrorResponse(VolleyError error) {
+//                //    postUsernameResponse.requestEndedWithError(error);
+//            }
+//        }){
+//            @Override
+//            protected Map<String,String> getParams(){
+//                Map<String,String> params = new HashMap<String, String>();
+//                params.put("email", email);
+//                params.put("uid", id);
+//                return params;
+//            }
+//
+//        };
+        Map<String,String> params = new HashMap<String, String>();
+        params.put("email", email);
+        params.put("uid", id);
+
+        JsonObjectRequest request_json = new JsonObjectRequest("http://49e6f37e.ngrok.io/auth/register/", new JSONObject(params),
+                new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        try {
+                            //Process os success response
+                            System.out.println("Posted This is the response");
+                            String token  = response.getString("token");
+                            System.out.println(token);
+                            SharedPreferences.Editor editor = getSharedPreferences(MY_PREFS, MODE_PRIVATE).edit();
+                            editor.putString("authtoken", token);
+                            editor.commit();
+                            dummyGetWithToken(context);
+
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                VolleyLog.e("Error: ", error.getMessage());
+            }
+        });
+        queue.add(request_json);
     }
 
 

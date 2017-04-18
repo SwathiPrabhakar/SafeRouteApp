@@ -1,6 +1,6 @@
 from app import db
 
-from flask import Blueprint, g
+from flask import Blueprint, g, jsonify
 
 from flask_restful import Api, Resource 
 from flask.ext.restful import abort, fields, marshal_with, reqparse
@@ -68,10 +68,10 @@ class BlogPostDetail(Resource):
 
 class BlogPostList(Resource):
 
-    @marshal_with(list_fields)
+    @login_required
     def get(self):
-        post = Post.query.all()
-        return post
+        dd = {"msg": "DSF"}
+        return dd, 200
 
     @marshal_with(post_fields)
     @login_required
@@ -88,4 +88,4 @@ class BlogPostList(Resource):
 
 
 # api.add_resource(BlogPostDetail, '/<string:slug>')
-# api.add_resource(BlogPostList, '/')
+api.add_resource(BlogPostList, '/')
