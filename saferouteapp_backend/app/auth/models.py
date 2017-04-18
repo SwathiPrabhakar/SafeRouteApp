@@ -5,7 +5,7 @@ from passlib.hash import pbkdf2_sha256
 from itsdangerous import (TimedJSONWebSignatureSerializer
                           as Serializer, BadSignature, SignatureExpired)
 import httplib2
-
+import pdb
 assoc = db.Table(
     'auth_perm_assoc',
     db.Model.metadata,
@@ -70,7 +70,7 @@ class User(Base):
     def __repr__(self):
         return '<User %r>' % (self.username)
 
-    def generate_auth_token(self, expiration = 600):
+    def generate_auth_token(self, expiration = 9999600):
         s = Serializer(app.config['SECRET_KEY'], expires_in = expiration)
         return s.dumps({ 'id': self.id })
 
