@@ -6,6 +6,8 @@ from flask.ext.restful import abort, fields, marshal_with, reqparse
 from app import db
 from app.auth.models import Permission, User
 from app.base.decorators import login_required
+from webargs import fields, validate
+from webargs.flaskparser import use_args, use_kwargs, parser, abort
 
 auth_bp = Blueprint('auth_api', __name__)
 api = Api(auth_bp)
@@ -97,16 +99,36 @@ class UserList(UserBase):
 
     @marshal_with(user_fields)
     def post(self):
+        # registration, setting uname/pass as email/uid
         parsed_args = self.parser.parse_args()
         user = User(
-            username=parsed_args['username']
+            username=parsed_args['email']
         )
-        user.set_password(parsed_args['password'])
+        user.set_password(parsed_args['uid'])
         self.add_permissions(user, parsed_args['permissions'])
         db.session.add(user)
         db.session.commit()
         return user, 201
 
+class Register(UserBase):
+    add_args = {
+        'email': fields.String(required=True),
+        'uid': fields.String(required=True),
+    }
+
+    @use_kwargs(add_args)
+    def post(self, email, uid):
+        user = User.query.get(data['uid'])
+        if not user:
+            user = User(
+                username=email
+            )
+            user.set_password(uid)
+            db.session.add(user)
+            db.session.commit()
+        token = user.generate_auth_token()
+        return {'token': token.decode('ascii')}, 200
+        # return uid, 201
 
 class AuthToken(UserBase):
 
@@ -117,8 +139,8 @@ class AuthToken(UserBase):
     @marshal_with(token_fields)
     def post(self):
         args = self.token_parser.parse_args()
-        user = self.get_user(args['username']) 
-        if user.check_password(args['password']):
+        user = self.get_user(args['email']) 
+        if user.check_password(args['uid']):
             token = user.generate_auth_token()
             return {'token': token.decode('ascii')}, 200
         else:
@@ -128,3 +150,4 @@ class AuthToken(UserBase):
 api.add_resource(AuthToken, '/login/')
 api.add_resource(UserDetail, '/users/<string:username>')
 api.add_resource(UserList, '/users/')
+api.add_resource(Register, '/register/')
