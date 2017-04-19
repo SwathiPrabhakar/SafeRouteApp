@@ -14,7 +14,6 @@ migrate = Migrate(app, db)
 key = 'AIzaSyDmNBpYDBoxkwYTW5Aw9H3YrEXaSi-tnAo'
 gmaps = googlemaps.Client(key=key)
 
-
 CORS(app, resources=r'/*', allow_headers='*')
 
 @app.errorhandler(404)
@@ -22,14 +21,12 @@ def not_found(error):
     err = {'message': "Resource doesn't exist."}
     return flask.jsonify(**err)
 
-
 from app.blog.resources import blog_bp
 from app.auth.resources import auth_bp
 from app.pages.resources import page_bp
 from app.routes.resources import route_bp
 from app.starred.resources import starred_bp
-
-
+from app.history.resources import history_bp
 
 app.register_blueprint(
     blog_bp,
@@ -54,4 +51,9 @@ app.register_blueprint(
 app.register_blueprint(
     starred_bp,
     url_prefix='/starred'
+)
+
+app.register_blueprint(
+    history_bp,
+    url_prefix='/history'
 )

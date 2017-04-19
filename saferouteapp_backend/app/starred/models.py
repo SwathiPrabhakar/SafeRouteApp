@@ -27,3 +27,5 @@ class Starred(Base):
 
     def __repr__(self):
         return '<Starred %r>' % (self.lat_lng)
+
+
