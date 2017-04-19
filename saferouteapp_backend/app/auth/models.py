@@ -36,6 +36,7 @@ class User(Base):
 
     username = db.Column(db.String(30), nullable=False, unique=True)
     password = db.Column(db.String(128), nullable=False)
+    push_token = db.Column(db.String(128))
     permissions = db.relationship("Permission", secondary=assoc)
 
     def __init__(self, username, **kwargs):
@@ -66,6 +67,10 @@ class User(Base):
     def set_password(self, password):
         self.password = pbkdf2_sha256.encrypt(password)
         return self.password
+
+    def set_push_token(self, push_token):
+        self.push_token = push_token
+        return self.push_token
 
     def __repr__(self):
         return '<User %r>' % (self.username)

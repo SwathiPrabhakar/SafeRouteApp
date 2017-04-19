@@ -145,10 +145,28 @@ class AuthToken(UserBase):
             token = user.generate_auth_token()
             return {'token': token.decode('ascii')}, 200
         else:
-            abort(401, message="Invalid login info") 
+            abort(401, message="Invalid login info")
 
+class PushToken(UserBase):
+    add_args = {
+        'push_token': fields.String(required=True),
+    }
+
+    @use_kwargs(add_args)
+    @login_required
+    def post(self, push_token):
+        user = g.user
+        try:
+            user.set_push_token(push_token)
+            db.session.add(user)
+            db.session.commit()
+            return "success", 200
+        except:
+            return "err", 400
 
 api.add_resource(AuthToken, '/login/')
 api.add_resource(UserDetail, '/users/<string:username>')
 api.add_resource(UserList, '/users/')
 api.add_resource(Register, '/register/')
+api.add_resource(PushToken, '/push_token/')
+
