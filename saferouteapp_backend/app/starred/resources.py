@@ -17,10 +17,9 @@ import pdb
 
 class Starred(Resource):
     add_args = {
-        'place': fields.Nested({
-            'lat': fields.Str(required=True),
-            'lng': fields.Str(required=True)
-            })
+
+        'lat': fields.Str(required=True),
+        'lng': fields.Str(required=True)
     }
     
     @login_required
@@ -31,16 +30,18 @@ class Starred(Resource):
         locs = []
         for s in sl:
             locs.append({'name': s.name, 'lat': s.latitude, 'lng' : s.longitude})
+        locs = {'places': locs}
         return locs, 200
         #return jsonify(r)
 
     @login_required
     @use_kwargs(add_args)
-    def post(self, place):
+    def post(self, lat, lng):
         user = g.user
         user_id = user.id
+        print(lat, lng)
         try:
-            star = Star(place['lat'], place['lng'], user_id)
+            star = Star(lat, lng, user_id)
             db.session.add(star)
             db.session.commit()
             star = star.name

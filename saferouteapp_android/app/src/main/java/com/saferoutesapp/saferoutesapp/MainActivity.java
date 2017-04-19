@@ -6,21 +6,21 @@ package com.saferoutesapp.saferoutesapp;
 
 //# Reference https://www.simplifiedcoding.net/android-push-notification-using-gcm-tutorial/
 
-        import android.support.v7.app.AppCompatActivity;
-        import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
+import android.os.Bundle;
 
-        import android.app.Activity;
-        import android.content.BroadcastReceiver;
-        import android.content.Context;
-        import android.content.Intent;
-        import android.content.IntentFilter;
-        import android.os.Bundle;
-        import android.support.v4.content.LocalBroadcastManager;
-        import android.util.Log;
-        import android.widget.Toast;
+import android.app.Activity;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.os.Bundle;
+import android.support.v4.content.LocalBroadcastManager;
+import android.util.Log;
+import android.widget.Toast;
 
-        import com.google.android.gms.common.ConnectionResult;
-        import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
 
 //this is our main activity
 public class MainActivity extends AppCompatActivity {
