@@ -3,6 +3,7 @@ import requests
 import pandas as pd
 import pdb
 import datetime
+import multiprocessing
 
 def query(slat, slong, dlat, dlong):
     baseurl = 'https://maps.googleapis.com/maps/api/directions/json?'
@@ -20,7 +21,7 @@ def get_safe_routes(frm="33.416565,-111.925015", to="33.418000, -111.931827"):
     departure_time = datetime.datetime.now()
     routes = gmaps.directions(frm, to, alternatives=True, mode="driving", departure_time=departure_time )
     route_coords = []
-    scores = []
+    routes_with_score = []
     for route in routes:
         legs = route[u'legs'][0]
         steps = legs[u'steps']
@@ -28,30 +29,28 @@ def get_safe_routes(frm="33.416565,-111.925015", to="33.418000, -111.931827"):
         ends = [d[u'end_location'] for d in steps]
         coords = list(set(map(lambda x: (x[u'lat'], x[u'lng']), starts + ends)))
         route_coords.append(coords)
-    for coords in route_coords:
-        events = 0
-        for coord in coords:
-            events += query_crime(coords[0], coords[1])
-        print(events)
-        scores.append(events) # / len(coords))
-    # return scores
-    routes_with_score = []
-    for index, r in enumerate(routes):
-        routes_with_score.append({"score":scores[index], "route":r})
+    for i, r in enumerate(routes):
+        pool = multiprocessing.Pool(processes=10)
+        scores = pool.map(query_crime, route_coords[i])
+        # scores = [query_crime(x) for x in route_coords[i]]
+        pool.close()
+        pool.join()
+        print(scores)
+        routes_with_score.append({"score":sum(scores)/max(1, len(scores)), "route":r})
     final_score = {}
     final_score["routes"] = routes_with_score
     return final_score
 
-def query_crime(lat, lng, shape='within_circle', rad=500, s_date='2015-01-01', e_date='2015-10-01', granular='ym'):
+def query_crime(loc, shape='within_circle', rad=500, s_date='2015-01-01', e_date='2015-10-01', granular='ym'):
     # api usage reference http://www.racketracer.com/2015/10/19/most-frequented-crimes-in-san-francisco-normalized-by-neighborhood/
-    url = "https://data.sfgov.org/resource/cuks-n6tp.json?$select=COUNT(*),category,date_trunc_" + \
-    granular + "(date) as date_key&$where=" + shape + "(location," + str(lat) + "," + str(lng) + "," + str(rad) + ") AND date>" + \
-    "'" + s_date + "' AND date<'" + e_date + "'&$group=date_key,category&$limit=50000"
+    lat, lng = loc
+    url = "https://data.sfgov.org/resource/cuks-n6tp.json?$select=COUNT(*)&$where=" + shape + "(location," + str(lat) + "," + str(lng) + "," + str(rad) + ") AND date>" + \
+    "'" + s_date + "' AND date<'" + e_date + "'&$limit=50000"
     response = requests.get(url).json()
-    df = pd.DataFrame(response)
-    if len(df) == 0:
+    try:
+        return int(response[0]['COUNT'])
+    except:
         return 0
-    return df.count()[0]
 
 # query_crime(37.757396, -122.492781)
 # q = ["37.293089, -122.213628", "37.318691, -122.088144"]
