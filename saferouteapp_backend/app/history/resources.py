@@ -4,29 +4,37 @@ from flask_restful import Api, Resource
 from flask.ext.restful import abort, fields, marshal_with, reqparse
 
 from app import db
-from app.auth.models import Permission, User
+from app.auth.models import User
+from app.history.models import History
 from app.base.decorators import login_required
 from webargs import fields, validate
 from webargs.flaskparser import use_args, use_kwargs, parser, abort
 
 history_bp = Blueprint('history_api', __name__)
+api = Api(history_bp)
 
-class Record(Resource):
+class HistoryStore(Resource):
     add_args = {
-        'email': fields.String(required=True),
-        'uid': fields.String(required=True),
+        'src_lat': fields.String(required=True),
+        'src_long': fields.String(required=True),
+        'dest_lat': fields.String(required=True),
+        'dest_long': fields.String(required=True),
+        'user_id': fields.Integer(required=True),
     }
 
+    #def post(self, src_lat, src_long, dest_lat, dest_long, user_id):
     @use_kwargs(add_args)
-    def post(self, email, uid):
+    def post(self):
         # todo store and verify uid 
-        user = User.query.filter_by(username=email).first()
-        if not user:
-            user = User(
-                username=email
+        record = History(
+        	src_latitude = add_args.src_lat,
+        	src_latitude = add_args.src_lat,
+        	src_latitude = add_args.src_lat,
+        	src_latitude = add_args.src_lat,
+        	user_id = add_args.user_id
             )
-            user.set_password(uid)
-            db.session.add(user)
-            db.session.commit()
-        token = user.generate_auth_token()
-        return {'token': token.decode('ascii')}, 200
+        db.session.add(record)
+        db.session.commit()
+        return "Yes"
+
+api.add_resource(HistoryStore, '/')
