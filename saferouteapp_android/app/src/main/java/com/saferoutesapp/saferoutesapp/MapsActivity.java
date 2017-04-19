@@ -153,6 +153,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             System.out.println(starred_position);
             mMap.addMarker(new MarkerOptions().position(starred_position).title(starred_address));
             mMap.moveCamera(CameraUpdateFactory.newLatLng(starred_position));
+            mMap.setTrafficEnabled(true);
         }
         else {
             // Add markers
@@ -313,6 +314,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     /**
      * A class to parse the Google Places in JSON format
+     myMap.setTrafficEnabled(true);
      */
     private class ParserTask extends AsyncTask<String, Integer, List<List<HashMap<String, String>>>> {
 

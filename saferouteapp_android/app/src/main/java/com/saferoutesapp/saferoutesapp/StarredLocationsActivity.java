@@ -56,7 +56,7 @@ public class StarredLocationsActivity extends AppCompatActivity {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 System.out.println(position);
                 System.out.println(InputActivity.locations.get(position));
-                Intent intent = new Intent(getApplicationContext(),MapsActivity.class);
+                Intent intent = new Intent(getApplicationContext(),InputActivity.class);
                 Bundle args = new Bundle();
                 args.putParcelable("starred_position", InputActivity.locations.get(position));
                 args.putString("starred_address", InputActivity.addresses.get(position));
