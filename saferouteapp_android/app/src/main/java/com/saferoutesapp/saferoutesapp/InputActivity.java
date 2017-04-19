@@ -117,6 +117,10 @@ public class InputActivity extends AppCompatActivity implements GoogleApiClient.
 
         logIn();
 
+//        auth end
+        Intent i = new Intent(this, GCMRegistrationIntentService.class);
+        startService(i);
+
         placeIDs = new ArrayList<>();
         from_input = (TextView) findViewById(R.id.from_input);
         geocoder = new Geocoder(this, Locale.getDefault());
