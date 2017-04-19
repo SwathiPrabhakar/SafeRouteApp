@@ -31,6 +31,7 @@ import android.widget.TextView;
 import android.util.Log;
 import android.Manifest;
 import android.widget.Toast;
+import com.loopj.android.http.*;
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
@@ -55,6 +56,9 @@ import com.google.android.gms.location.places.Place;
 import com.google.android.gms.location.places.PlaceBuffer;
 import com.google.android.gms.location.places.Places;
 import com.google.android.gms.maps.model.LatLng;
+import com.loopj.android.http.AsyncHttpClient;
+import com.loopj.android.http.AsyncHttpResponseHandler;
+import com.loopj.android.http.RequestParams;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -71,6 +75,19 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+
+import cz.msebera.android.httpclient.Header;
+import cz.msebera.android.httpclient.HttpEntity;
+import cz.msebera.android.httpclient.HttpResponse;
+import cz.msebera.android.httpclient.NameValuePair;
+import cz.msebera.android.httpclient.client.ClientProtocolException;
+import cz.msebera.android.httpclient.client.HttpClient;
+import cz.msebera.android.httpclient.client.entity.UrlEncodedFormEntity;
+import cz.msebera.android.httpclient.client.methods.HttpPost;
+import cz.msebera.android.httpclient.impl.client.DefaultHttpClient;
+import cz.msebera.android.httpclient.message.BasicNameValuePair;
+import cz.msebera.android.httpclient.protocol.BasicHttpContext;
+import cz.msebera.android.httpclient.protocol.HttpContext;
 
 /**
  * Created by avniv on 4/14/2017.
@@ -111,7 +128,7 @@ public class InputActivity extends AppCompatActivity implements GoogleApiClient.
                 .addApi(LocationServices.API)
                 .build();
 
-        logIn();
+        //logIn();
 
         placeIDs = new ArrayList<>();
         geocoder = new Geocoder(this, Locale.getDefault());
@@ -339,6 +356,27 @@ public class InputActivity extends AppCompatActivity implements GoogleApiClient.
         return true;
     }
 
+    public void postData(LatLng src, LatLng dest, int user_id) {
+        // Create a new HttpClient and Post Header
+        AsyncHttpClient client = new AsyncHttpClient();
+        RequestParams params = new RequestParams();
+        params.put("src_lat", Double.toString(src.latitude));
+        params.put("src_long", Double.toString(src.longitude));
+        params.put("dest_lat", Double.toString(dest.latitude));
+        params.put("dest_long", Double.toString(dest.longitude));
+        params.put("user_id", ""+user_id);
+        client.post(SERVER+"/history/", params, new AsyncHttpResponseHandler(){
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, byte[] response) {
+                // called when response HTTP status is "200 OK"
+            }
+            @Override
+            public void onFailure(int statusCode, Header[] headers, byte[] errorResponse, Throwable e) {
+                // called when response HTTP status is "4XX" (eg. 401, 403, 404)
+            }
+        });
+    }
+
     public void onFindRoutes(View v) {
         // remove this later
         if(src==null)
@@ -347,6 +385,7 @@ public class InputActivity extends AppCompatActivity implements GoogleApiClient.
         //dest = new LatLng(33.4236, -111.9393);
         Log.d(TAG, "----------------src :: "+src);
         Log.d(TAG, "----------------dest :: "+dest);
+        postData(src, dest, 1);
         Intent intent = new Intent(this, MapsActivity.class);
         Bundle args = new Bundle();
         args.putParcelable("src", src);

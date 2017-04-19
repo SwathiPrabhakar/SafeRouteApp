@@ -371,7 +371,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 // Adding all the points in the route to LineOptions
                 lineOptions.addAll(points);
                 lineOptions.width(15);
-                float[] hsv = new float[3];
                 lineOptions.color(Color.argb(192, 21, 153, 219));
 
                 Log.d("onPostExecute","onPostExecute lineoptions decoded");

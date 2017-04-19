@@ -19,22 +19,22 @@ class HistoryStore(Resource):
         'src_long': fields.String(required=True),
         'dest_lat': fields.String(required=True),
         'dest_long': fields.String(required=True),
-        'user_id': fields.Integer(required=True),
+        'user_id': fields.String(required=True)
     }
 
     #def post(self, src_lat, src_long, dest_lat, dest_long, user_id):
     @use_kwargs(add_args)
-    def post(self):
+    def post(self, src_lat, src_long, dest_lat, dest_long, user_id):
         # todo store and verify uid 
         record = History(
-        	src_latitude = add_args.src_lat,
-        	src_latitude = add_args.src_lat,
-        	src_latitude = add_args.src_lat,
-        	src_latitude = add_args.src_lat,
-        	user_id = add_args.user_id
+        	src_lat,
+        	src_long,
+        	dest_lat,
+        	dest_long,
+        	user_id
             )
         db.session.add(record)
         db.session.commit()
-        return "Yes"
+        return record.id
 
 api.add_resource(HistoryStore, '/')

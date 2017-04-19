@@ -13,7 +13,7 @@ class History(Base):
     dest_longitude = db.Column(db.String(255), nullable=False)
     user_id = db.Column(db.Integer, nullable=False)
     
-    def __init__(self, src_lat, src_lng, dest_lat, dest_lng, user_id):
+    def __init__(self, src_lat, src_lng, dest_lat, dest_lng, user_id, **kwargs):
         self.src_latitude = src_lat 
         self.src_longitude = src_lng 
         self.dest_latitude = dest_lat  
