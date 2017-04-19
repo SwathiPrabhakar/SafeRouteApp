@@ -7,4 +7,4 @@ dist
 _mailinglist
 .tox
 *.db
-*db
+db.sqlite
