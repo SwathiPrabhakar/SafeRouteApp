@@ -90,17 +90,29 @@ public class InputActivity extends AppCompatActivity{
         from_input = (TextView) findViewById(R.id.from_input);
         geocoder = new Geocoder(this, Locale.getDefault());
 
-        sourceACTextView = (AutoCompleteTextView) findViewById(R.id.from_input);
+
+            sourceACTextView = (AutoCompleteTextView) findViewById(R.id.from_input);
         if(!runtime_permissions())
             enable_buttons();
 
 
         destinationACTextView = (AutoCompleteTextView) findViewById(R.id.to_input);
+
+        Bundle bundle = getIntent().getParcelableExtra("bundle");
+        if(bundle != null){
+            LatLng starred_position = bundle.getParcelable("starred_position");
+            String starred_address = bundle.getString("starred_address");
+
+            if(starred_position != null ){
+                destinationACTextView.setText(starred_address);
+            }
+        }
         destinationACTextView.setAdapter(new PlacesAutoCompleteAdapter(this, R.layout.autocomplete_list_item));
         destinationACTextView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 String description = (String) parent.getItemAtPosition(position);
+                System.out.println("description-" + description);
                 List<Address> addressList;
                 try {
                     addressList = geocoder.getFromLocationName(description, 1);
