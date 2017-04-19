@@ -2,6 +2,7 @@ package com.saferoutesapp.saferoutesapp;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.location.Address;
@@ -32,13 +33,22 @@ import android.util.Log;
 import android.Manifest;
 import android.widget.Toast;
 
+import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
+import com.android.volley.VolleyLog;
+import com.android.volley.toolbox.ImageLoader;
+import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.android.gms.appindexing.AppIndex;
+import com.google.android.gms.auth.api.Auth;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.auth.api.signin.GoogleSignInResult;
+import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.location.LocationServices;
@@ -58,15 +68,17 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 /**
  * Created by avniv on 4/14/2017.
  */
 
 
-public class InputActivity extends AppCompatActivity{
+public class InputActivity extends AppCompatActivity implements GoogleApiClient.OnConnectionFailedListener {
     private BroadcastReceiver broadcastReceiver;
     private TextView from_input;
     final private String TAG = "InputActivity";
@@ -80,11 +92,30 @@ public class InputActivity extends AppCompatActivity{
     private ArrayList<String> placeIDs;
     static ArrayList<String> addresses = new ArrayList<String>();
     static ArrayList<LatLng> locations = new ArrayList<>();
+    private GoogleSignInOptions gso;
+    private int RC_SIGN_IN = 100;
+    public static final String MY_PREFS = "saferoutes";
+    public static final String BASE_URL = "http://261eea5d.ngrok.io";
+
+    //google api client
+    private GoogleApiClient mGoogleApiClient;
+
+    //Signin constant to check the activity result
 
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.input_activity);
+        gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestEmail()
+                .build();
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .enableAutoManage(this /* FragmentActivity */, this /* OnConnectionFailedListener */)
+                .addApi(Auth.GOOGLE_SIGN_IN_API, gso)
+                .addApi(LocationServices.API)
+                .build();
+
+        logIn();
 
         placeIDs = new ArrayList<>();
         from_input = (TextView) findViewById(R.id.from_input);
@@ -115,6 +146,19 @@ public class InputActivity extends AppCompatActivity{
 
     }
 
+    private void logIn(){
+        Intent signInIntent = Auth.GoogleSignInApi.getSignInIntent(mGoogleApiClient);
+        startActivityForResult(signInIntent, RC_SIGN_IN);
+    }
+
+    private void logOut() {
+        Auth.GoogleSignInApi.signOut(mGoogleApiClient);
+        Auth.GoogleSignInApi.revokeAccess(mGoogleApiClient);
+    }
+
+    private void revokeAccess() {
+        Auth.GoogleSignInApi.revokeAccess(mGoogleApiClient);
+    }
     private void enable_buttons() {
         listener = new LocationListener() {
             @Override
@@ -184,6 +228,100 @@ public class InputActivity extends AppCompatActivity{
                 runtime_permissions();
             }
         }
+    }
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == RC_SIGN_IN) {
+            GoogleSignInResult result = Auth.GoogleSignInApi.getSignInResultFromIntent(data);
+            handleSignInResult(result);
+        }
+    }
+
+    private void handleSignInResult(GoogleSignInResult result) {
+        //If the login succeed
+        if (result.isSuccess()) {
+            //Getting google account
+            GoogleSignInAccount acct = result.getSignInAccount();
+
+
+            handleBackendSignIn(this, acct.getEmail(), acct.getId());
+            Toast.makeText(this, "Login Success", Toast.LENGTH_LONG).show();
+//            dummyGetWithToken(this);
+
+        } else {
+            //If login fails
+            Toast.makeText(this, "Login Failed", Toast.LENGTH_LONG).show();
+            logIn();
+        }
+    }
+
+    public void dummyGetWithToken(final Context context){
+        RequestQueue queue = Volley.newRequestQueue(context);
+
+        JsonObjectRequest req = new JsonObjectRequest(BASE_URL +  "/blog/", null,
+                new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        try {
+                            VolleyLog.v("Response:%n %s", response.toString(4));
+                            System.out.print(response.toString());
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                VolleyLog.e("Error: ", error.getMessage());
+            }
+
+
+        }) {
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                HashMap<String, String> headers = new HashMap<String, String>();
+                SharedPreferences prefs = getSharedPreferences(MY_PREFS, MODE_PRIVATE);
+                String token = prefs.getString("authtoken", null);
+                System.out.print(token.toString());
+                headers.put("Authorization", "Token " + token);
+                return headers;
+            }
+        };
+        queue.add(req);
+
+    }
+
+    public void handleBackendSignIn(final Context context, final String email, final String id){
+        RequestQueue queue = Volley.newRequestQueue(context);
+        Map<String,String> params = new HashMap<String, String>();
+        params.put("email", email);
+        params.put("uid", id);
+
+        JsonObjectRequest request_json = new JsonObjectRequest(BASE_URL + "/auth/register/", new JSONObject(params),
+                new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        try {
+                            //Process os success response
+                            System.out.println("Posted This is the response");
+                            String token  = response.getString("token");
+                            System.out.println(token);
+                            SharedPreferences.Editor editor = getSharedPreferences(MY_PREFS, MODE_PRIVATE).edit();
+                            editor.putString("authtoken", token);
+                            editor.commit();
+                            dummyGetWithToken(context);
+
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                VolleyLog.e("Error: ", error.getMessage());
+            }
+        });
+        queue.add(request_json);
     }
 
     @Override
@@ -439,6 +577,10 @@ public class InputActivity extends AppCompatActivity{
 
             return filter;
         }
+    }
+    @Override
+    public void onConnectionFailed(ConnectionResult connectionResult) {
+
     }
 }
 

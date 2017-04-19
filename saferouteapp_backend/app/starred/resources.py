@@ -39,10 +39,13 @@ class Starred(Resource):
     def post(self, place):
         user = g.user
         user_id = user.id
-        star = Star(place['lat'], place['lng'], user_id)
-        db.session.add(star)
-        db.session.commit()
-        routes = "get_safe_routes_raw(frm, to)"
-        return routes, 200
+        try:
+            star = Star(place['lat'], place['lng'], user_id)
+            db.session.add(star)
+            db.session.commit()
+            star = star.name
+        except:
+            star = "exists"
+        return star, 200
 
 api.add_resource(Starred, '/')
