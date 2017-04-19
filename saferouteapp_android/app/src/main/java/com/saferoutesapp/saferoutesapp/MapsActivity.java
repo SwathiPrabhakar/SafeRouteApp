@@ -52,7 +52,7 @@ import java.util.Locale;
 import java.util.Map;
 
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
+public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GlobalConst {
 
     private GoogleMap mMap;
     private LocationListener locationListener;
@@ -399,7 +399,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         // Building the url to the web service
         //http://127.0.0.1:5000/routes/?frm=33.416565,-111.925015&to=33.418000, -111.931827
-        String url = "http://35.160.206.91:5000/routes?" + parameters;
+        String url = SERVER + "/routes?" + parameters;
         //return "http://ziptasticapi.com/85281";
         return url;
     }

@@ -15,7 +15,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
@@ -78,10 +77,8 @@ import java.util.Map;
  */
 
 
-public class InputActivity extends AppCompatActivity implements GoogleApiClient.OnConnectionFailedListener {
-    private BroadcastReceiver broadcastReceiver;
-    private TextView from_input;
-    final private String TAG = "InputActivity";
+public class InputActivity extends AppCompatActivity implements GoogleApiClient.OnConnectionFailedListener, GlobalConst {
+    final private String TAG = this.getClass().getSimpleName();
     private LocationListener listener;
     private LocationManager locationManager;
     private LatLng src=null;
@@ -95,7 +92,6 @@ public class InputActivity extends AppCompatActivity implements GoogleApiClient.
     private GoogleSignInOptions gso;
     private int RC_SIGN_IN = 100;
     public static final String MY_PREFS = "saferoutes";
-    public static final String BASE_URL = "http://261eea5d.ngrok.io";
 
     //google api client
     private GoogleApiClient mGoogleApiClient;
@@ -118,7 +114,6 @@ public class InputActivity extends AppCompatActivity implements GoogleApiClient.
         logIn();
 
         placeIDs = new ArrayList<>();
-        from_input = (TextView) findViewById(R.id.from_input);
         geocoder = new Geocoder(this, Locale.getDefault());
 
         sourceACTextView = (AutoCompleteTextView) findViewById(R.id.from_input);
@@ -259,7 +254,7 @@ public class InputActivity extends AppCompatActivity implements GoogleApiClient.
     public void dummyGetWithToken(final Context context){
         RequestQueue queue = Volley.newRequestQueue(context);
 
-        JsonObjectRequest req = new JsonObjectRequest(BASE_URL +  "/blog/", null,
+        JsonObjectRequest req = new JsonObjectRequest(SERVER +  "/blog/", null,
                 new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject response) {
@@ -297,7 +292,7 @@ public class InputActivity extends AppCompatActivity implements GoogleApiClient.
         params.put("email", email);
         params.put("uid", id);
 
-        JsonObjectRequest request_json = new JsonObjectRequest(BASE_URL + "/auth/register/", new JSONObject(params),
+        JsonObjectRequest request_json = new JsonObjectRequest(SERVER + "/auth/register/", new JSONObject(params),
                 new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject response) {
