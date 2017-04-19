@@ -1,6 +1,7 @@
 package com.saferoutesapp.saferoutesapp;
 
 import android.Manifest;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Address;
@@ -12,10 +13,13 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 
+import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
+import com.android.volley.VolleyLog;
+import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.android.gms.appindexing.Action;
@@ -50,9 +54,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import com.google.android.gms.maps.GoogleMap.OnMapClickListener;
 
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
+public class MapsActivity extends FragmentActivity  implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener, OnMapClickListener {
 
     private GoogleMap mMap;
     private LocationListener locationListener;
@@ -60,6 +65,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     final private String TAG = "MapsActivity";
     ArrayList<LatLng> MarkerPoints;
     public String starredLocationEnabled = "false";
+    public static final String MY_PREFS = "saferoutes";
+    public static final String BASE_URL = "http://753ac14f.ngrok.io";
 
     /**
      * ATTENTION: This was auto-generated to implement the App Indexing API.
@@ -71,16 +78,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
-
+        LatLng src = null;
+        LatLng dest = null;
         Bundle bundle = getIntent().getParcelableExtra("bundle");
-        LatLng src = bundle.getParcelable("src");
-        LatLng dest = bundle.getParcelable("dest");
-
         MarkerPoints = new ArrayList<>();
-        MarkerPoints.add(src);
-        MarkerPoints.add(dest);
-
-
+        if(bundle != null){
+             src = bundle.getParcelable("src");
+             dest = bundle.getParcelable("dest");
+            MarkerPoints.add(src);
+            MarkerPoints.add(dest);
+        }
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         //Location loc = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
@@ -142,24 +149,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-
-        // Add a marker in Sydney and move the camera
-        Bundle bundle = getIntent().getParcelableExtra("bundle");
-        LatLng starred_position = bundle.getParcelable("starred_position");
-        String starred_address = bundle.getString("starred_address");
-
-        if(starred_position != null){
-            System.out.println(starred_address);
-            System.out.println(starred_position);
-            mMap.addMarker(new MarkerOptions().position(starred_position).title(starred_address));
-            mMap.moveCamera(CameraUpdateFactory.newLatLng(starred_position));
-            mMap.setTrafficEnabled(true);
-        }
-        else {
-            // Add markers
+        mMap.setOnMapClickListener(this);
+        if(!MarkerPoints.isEmpty()){
             LatLng src = MarkerPoints.get(0);
             LatLng dest = MarkerPoints.get(1);
-            // mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
             mMap.addMarker(new MarkerOptions().position(src));
             mMap.addMarker(new MarkerOptions().position(dest));
 
@@ -173,17 +166,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             //move map camera
             mMap.moveCamera(CameraUpdateFactory.newLatLng(src));
             mMap.animateCamera(CameraUpdateFactory.zoomTo(11));
+            mMap.setMyLocationEnabled(true);
         }
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             return;
         }
-        mMap.setMyLocationEnabled(true);
     }
 
     public void onMapClick(final LatLng latLng) {
-
-
         //Getting address for Marker which will be set as title
+        System.out.println("map click");
         String markerTitle = "";
         Geocoder geocoder = new Geocoder(getApplicationContext(), Locale.US);
         try {
@@ -205,40 +197,48 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         System.out.println(markerTitle);
         mMap.addMarker(new MarkerOptions().position(latLng).title(markerTitle));
         mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
-
+        Map<String,String> params = new HashMap<String, String>();
+        if (latLng != null) {
+            params.put("lat", Double.toString(latLng.latitude));
+            params.put("lng", Double.toString(latLng.longitude));
+        } else {
+            params.put("lat", Double.toString(0.0));
+            params.put("lng", Double.toString(0.0));
+        }
         /*
         Send Post Request to Backend
         {"place":{"lat":"37.4220","long":"-122.0841"}}
          */
+
         RequestQueue queue = Volley.newRequestQueue(this);
-        StringRequest sr = new StringRequest(Request.Method.POST, "https://api.myjson.com/bins/si253/starred",
-                new Response.Listener<String>() {
+        JsonObjectRequest request_json = new JsonObjectRequest(BASE_URL + "/starred/", new JSONObject(params),
+                new Response.Listener<JSONObject>() {
                     @Override
-                    public void onResponse(String response) {
-                        System.out.println("Posted This is the response");
-                        System.out.println(response);
+                    public void onResponse(JSONObject response) {
+                        //Process os success response
+                        System.out.println("Posted latitude longitude respose on starred location" + response.toString());
                     }
                 }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
-                System.out.println(error.toString());
-                System.out.println(error.getMessage());
+                VolleyLog.e("Error: ", error.getMessage());
             }
-        }) {
-            @Override
-            protected Map<String, String> getParams() {
-                Map<String, String> params = new HashMap<String, String>();
-                if (latLng != null) {
-                    params.put("latitude", Double.toString(latLng.latitude));
-                    params.put("latitude", Double.toString(latLng.longitude));
-                } else {
-                    params.put("latitude", Double.toString(0.0));
-                    params.put("latitude", Double.toString(0.0));
-                }
-                return params;
+        }){
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                HashMap<String, String> headers = new HashMap<String, String>();
+                SharedPreferences prefs = getSharedPreferences(MY_PREFS, MODE_PRIVATE);
+                String token = prefs.getString("authtoken", null);
+                System.out.print(token.toString());
+                headers.put("Authorization", "Token " + token);
+                return headers;
             }
         };
-        queue.add(sr);
+        queue.add(request_json);
+    }
+
+    @Override
+    public boolean onMarkerClick(Marker marker) {
+        return false;
     }
 
     private class FetchUrl extends AsyncTask<String, Void, String> {

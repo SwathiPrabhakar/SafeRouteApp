@@ -95,7 +95,7 @@ public class InputActivity extends AppCompatActivity implements GoogleApiClient.
     private GoogleSignInOptions gso;
     private int RC_SIGN_IN = 100;
     public static final String MY_PREFS = "saferoutes";
-    public static final String BASE_URL = "http://261eea5d.ngrok.io";
+    public static final String BASE_URL = "http://753ac14f.ngrok.io";
 
     //google api client
     private GoogleApiClient mGoogleApiClient;
@@ -247,8 +247,11 @@ public class InputActivity extends AppCompatActivity implements GoogleApiClient.
     }
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        System.out.print("Signinbef");
         super.onActivityResult(requestCode, resultCode, data);
+        System.out.print("Signin");
         if (requestCode == RC_SIGN_IN) {
+            System.out.print("Signin requestcode");
             GoogleSignInResult result = Auth.GoogleSignInApi.getSignInResultFromIntent(data);
             handleSignInResult(result);
         }
@@ -267,14 +270,18 @@ public class InputActivity extends AppCompatActivity implements GoogleApiClient.
 
         } else {
             //If login fails
-            Toast.makeText(this, "Login Failed", Toast.LENGTH_LONG).show();
-            logIn();
+            System.out.print("Failed ");
+            Log.e("result", result.toString());
+            Toast.makeText(this, "Login Failed!!!!!!!!" + result.toString(), Toast.LENGTH_LONG).show();
+            if(result != null)
+                System.out.print(result.toString());
+
+//            logIn();
         }
     }
 
     public void dummyGetWithToken(final Context context){
         RequestQueue queue = Volley.newRequestQueue(context);
-
         JsonObjectRequest req = new JsonObjectRequest(BASE_URL +  "/blog/", null,
                 new Response.Listener<JSONObject>() {
                     @Override
@@ -411,6 +418,8 @@ public class InputActivity extends AppCompatActivity implements GoogleApiClient.
     }
 
     private void parseStarredLocations() {
+
+/*
         RequestQueue queue = Volley.newRequestQueue(this);
         StringRequest stringRequest = new StringRequest(Request.Method.GET, "https://api.myjson.com/bins/m68r3",
                 new Response.Listener<String>() {
@@ -427,6 +436,41 @@ public class InputActivity extends AppCompatActivity implements GoogleApiClient.
         });
         // Add the request to the RequestQueue.
         queue.add(stringRequest);
+*/
+
+        RequestQueue queue = Volley.newRequestQueue(this);
+        JsonObjectRequest req = new JsonObjectRequest(BASE_URL +  "/starred/", null,
+                new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        try {
+                            VolleyLog.v("Response:%n %s", response.toString(4));
+                            System.out.print(response.toString());
+                            parseStarredLocationsJson(response.toString());
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                VolleyLog.e("Error: ", error.getMessage());
+            }
+
+
+        }) {
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                HashMap<String, String> headers = new HashMap<String, String>();
+                SharedPreferences prefs = getSharedPreferences(MY_PREFS, MODE_PRIVATE);
+                String token = prefs.getString("authtoken", null);
+                System.out.print(token.toString());
+                headers.put("Authorization", "Token " + token);
+                return headers;
+            }
+        };
+        queue.add(req);
+
+
     }
 
     private void addStarredLocation() {
@@ -456,8 +500,8 @@ public class InputActivity extends AppCompatActivity implements GoogleApiClient.
             }
             for (int j = 0; j < jsonPlaces.length(); j++) {
                 JSONObject jsonobject = jsonPlaces.getJSONObject(j);
-                getLocation = new LatLng( Double.parseDouble(jsonobject.getString("lat")), Double.parseDouble(jsonobject.getString("long")));
-                getAdrress = jsonobject.getString("place");
+                getLocation = new LatLng( Double.parseDouble(jsonobject.getString("lat")), Double.parseDouble(jsonobject.getString("lng")));
+                getAdrress = jsonobject.getString("name");
                 System.out.println(getLocation.toString() + "  - " + getAdrress);
                 addresses.add(getAdrress);
                 locations.add(getLocation);
