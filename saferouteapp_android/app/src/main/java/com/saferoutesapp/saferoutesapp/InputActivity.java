@@ -1,5 +1,6 @@
 package com.saferoutesapp.saferoutesapp;
 
+import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -110,6 +111,7 @@ public class InputActivity extends AppCompatActivity implements GoogleApiClient.
     private int RC_SIGN_IN = 100;
     public static final String MY_PREFS = "saferoutes";
 
+    public static String current_location = null;
     //google api client
     private GoogleApiClient mGoogleApiClient;
 
@@ -128,7 +130,7 @@ public class InputActivity extends AppCompatActivity implements GoogleApiClient.
                 .addApi(LocationServices.API)
                 .build();
 
-        //logIn();
+        logIn();
 
 //        auth end
         Intent i = new Intent(this, GCMRegistrationIntentService.class);
@@ -203,6 +205,7 @@ public class InputActivity extends AppCompatActivity implements GoogleApiClient.
                     }
 
                     String finalAddress = builder.toString(); //This is the complete address.
+                    current_location = finalAddress;
                     sourceACTextView.setText(finalAddress);
                 } catch (IOException e) {}
                 catch (NullPointerException e) {}
@@ -278,6 +281,16 @@ public class InputActivity extends AppCompatActivity implements GoogleApiClient.
 
             handleBackendSignIn(this, acct.getEmail(), acct.getId());
             Toast.makeText(this, "Login Success", Toast.LENGTH_LONG).show();
+            //inserting values in shared preference for profile page
+            SharedPreferences.Editor editorProfile = getSharedPreferences(MY_PREFS, MODE_PRIVATE).edit();
+            System.out.println("here");
+            System.out.println(acct.getEmail());
+            System.out.println(acct.getDisplayName());
+            editorProfile.putString("user_email", acct.getEmail());
+            editorProfile.putString("user_name", acct.getDisplayName());
+            editorProfile.putString("photo_url", acct.getPhotoUrl().toString());
+            editorProfile.commit();
+
 //            dummyGetWithToken(this);
 
         } else {
@@ -288,7 +301,7 @@ public class InputActivity extends AppCompatActivity implements GoogleApiClient.
             if(result != null)
                 System.out.print(result.toString());
 
-//            logIn();
+            logIn();
         }
     }
 
@@ -417,29 +430,33 @@ public class InputActivity extends AppCompatActivity implements GoogleApiClient.
             case R.id.listStarredLocations:
                 parseStarredLocations();
                 return true;
+            case R.id.nearByTrafficIncidents:
+                generateNearByTrafficIncidents();
+                return true;
+            case R.id.myProfile:
+                openProfilePage();
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
     }
+
+    private void generateNearByTrafficIncidents() {
+    }
+
+    private void openProfilePage() {
+        //Satrting profile page activity
+        Intent intent = new Intent(this, ProfilePage.class);
+        startActivity(intent);
+    }
+
     public void onAlertFriend(View v) {
         System.out.println("Alerting a Friend");
-        String messageAlert = "Alerting my friend";
+        String messageAlert = "Alerting my friend...";
         //Get last known location --> mLastLocation
-        getCurrentLocation();
-/*        LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-        if (locationManager != null) {
-            if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                return;
-            }
-            Location lastKnownLocationGPS = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-            if (lastKnownLocationGPS != null) {
-                messageAlert += lastKnownLocationGPS.toString();
-            } else {
-                Location loc =  locationManager.getLastKnownLocation(LocationManager.PASSIVE_PROVIDER);
-                if(loc!=null)
-                    messageAlert += loc.toString();
-            }
-        }*/
+        if(current_location != null){
+            messageAlert += "I am at " + current_location;
+        }
         System.out.println(messageAlert);
 
         //Intiate a "New message" activity
@@ -448,7 +465,11 @@ public class InputActivity extends AppCompatActivity implements GoogleApiClient.
         intentt.setType("vnd.android-dir/mms-sms");
         intentt.putExtra(Intent.EXTRA_TEXT, "");
         intentt.putExtra("sms_body", messageAlert);
-        startActivityForResult(Intent.createChooser(intentt, ""), 0);
+        try {
+            startActivityForResult(Intent.createChooser(intentt, ""), 0);
+        } catch (ActivityNotFoundException e) {
+            Toast.makeText(this, "This phone does not have sms application", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void parseStarredLocations() {

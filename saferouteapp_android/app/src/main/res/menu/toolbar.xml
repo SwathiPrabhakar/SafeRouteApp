@@ -10,7 +10,11 @@
         android:title="List Starred Locations"
         app:showAsAction="never"/>
     <item
-        android:id="@+id/Option3"
-        android:title="Option 3"
+        android:id="@+id/nearByTrafficIncidents"
+        android:title="Nearby Traffic Incidents"
+        app:showAsAction="never"/>
+    <item
+        android:id="@+id/myProfile"
+        android:title="My Profile"
         app:showAsAction="never"/>
 </menu>
