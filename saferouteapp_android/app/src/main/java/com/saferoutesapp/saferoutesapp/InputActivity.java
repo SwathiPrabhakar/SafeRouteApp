@@ -6,6 +6,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.location.Address;
+import android.location.Criteria;
 import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
@@ -31,6 +32,7 @@ import android.widget.TextView;
 import android.util.Log;
 import android.Manifest;
 import android.widget.Toast;
+
 import com.loopj.android.http.*;
 
 import com.android.volley.AuthFailureError;
@@ -98,8 +100,8 @@ public class InputActivity extends AppCompatActivity implements GoogleApiClient.
     final private String TAG = this.getClass().getSimpleName();
     private LocationListener listener;
     private LocationManager locationManager;
-    private LatLng src=null;
-    private LatLng dest=null;
+    private LatLng src = null;
+    private LatLng dest = null;
     private Geocoder geocoder;
     private AutoCompleteTextView sourceACTextView;
     private AutoCompleteTextView destinationACTextView;
@@ -109,57 +111,69 @@ public class InputActivity extends AppCompatActivity implements GoogleApiClient.
     private GoogleSignInOptions gso;
     private int RC_SIGN_IN = 100;
     public static final String MY_PREFS = "saferoutes";
-
+    private int GPS_REQUEST = 10;
+    private boolean srcSetFlag = false;
+    private boolean destSetFlag = false;
+    private Location srcLocation;
     //google api client
     private GoogleApiClient mGoogleApiClient;
 
     //Signin constant to check the activity result
 
-
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.input_activity);
+        destinationACTextView = (AutoCompleteTextView) findViewById(R.id.to_input);
+        sourceACTextView = (AutoCompleteTextView) findViewById(R.id.from_input);
+        placeIDs = new ArrayList<>();
+        geocoder = new Geocoder(this, Locale.getDefault());
+
         gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestEmail()
                 .build();
+
         mGoogleApiClient = new GoogleApiClient.Builder(this)
                 .enableAutoManage(this /* FragmentActivity */, this /* OnConnectionFailedListener */)
                 .addApi(Auth.GOOGLE_SIGN_IN_API, gso)
                 .addApi(LocationServices.API)
                 .build();
 
-        //logIn();
+        logIn();
 
-//        auth end
-        Intent i = new Intent(this, GCMRegistrationIntentService.class);
-        startService(i);
-
-        placeIDs = new ArrayList<>();
-        geocoder = new Geocoder(this, Locale.getDefault());
-
-
-            sourceACTextView = (AutoCompleteTextView) findViewById(R.id.from_input);
-        if(!runtime_permissions())
+        // getting the source location
+        if (!runtime_permissions())
             enable_buttons();
 
-
-        destinationACTextView = (AutoCompleteTextView) findViewById(R.id.to_input);
+        if (!srcSetFlag) {
+            // Home : 33.4284328,-111.9501358
+            // Nobel Library : 33.4201427,-111.9285955
+            src = new LatLng(33.4201427,-111.9285955);
+            srcSetFlag = true;
+            sourceACTextView.setText(coordinatesToAddress(src));
+        }
+            // Using push notification to get the destination
+            Bundle bundleGCM = getIntent().getExtras();
+        if (bundleGCM == null) {
+            Intent i = new Intent(this, GCMRegistrationIntentService.class);
+            startService(i);
+        }
 
         Bundle bundle = getIntent().getParcelableExtra("bundle");
-        if(bundle != null){
+        if (bundle != null) {
             LatLng starred_position = bundle.getParcelable("starred_position");
             String starred_address = bundle.getString("starred_address");
 
-            if(starred_position != null ){
+            if (starred_position != null) {
                 destinationACTextView.setText(starred_address);
             }
         }
+
+        // Destination box: Drop down adapter and click listener
         destinationACTextView.setAdapter(new PlacesAutoCompleteAdapter(this, R.layout.autocomplete_list_item));
         destinationACTextView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 String description = (String) parent.getItemAtPosition(position);
-                System.out.println("description-" + description);
                 List<Address> addressList;
                 try {
                     addressList = geocoder.getFromLocationName(description, 1);
@@ -172,10 +186,73 @@ public class InputActivity extends AppCompatActivity implements GoogleApiClient.
             }
         });
 
+        // Destination box: Drop down adapter and click listener
+        sourceACTextView.setAdapter(new PlacesAutoCompleteAdapter(this, R.layout.autocomplete_list_item));
+        sourceACTextView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                String description = (String) parent.getItemAtPosition(position);
+                List<Address> addressList;
+                try {
+                    addressList = geocoder.getFromLocationName(description, 1);
+                    Address addr1 = addressList.get(0);
+                    src = new LatLng(addr1.getLatitude(), addr1.getLongitude());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+            }
+        });
     }
 
-    private void logIn(){
+    private void pushNotificationCalc() {
+        srcLocation = new Location("");
+        if (src != null) {
+            srcLocation.setLatitude(src.latitude);
+            srcLocation.setLongitude(src.longitude);
+        }
+        // Using push notification to get the destination
+        Bundle bundleGCM = getIntent().getExtras();
+        if (bundleGCM != null) {
+            int maxCount = Integer.MIN_VALUE;
+            try {
+                String message = bundleGCM.getString("message");
+                JSONObject json = new JSONObject(message);
+                JSONArray jArray = json.getJSONArray("result");
+                for (int i = 0; i < jArray.length(); i++) {
+                    JSONObject objectInArray = jArray.getJSONObject(i);
+
+                    int count = Integer.parseInt(objectInArray.getString("count"));
+                    LatLng tempSrc = new LatLng(Double.parseDouble(objectInArray.getString("src_lat")), Double.parseDouble(objectInArray.getString("src_lng")));
+                    Location tempSrcLoc = new Location("");
+                    tempSrcLoc.setLatitude(tempSrc.latitude);
+                    tempSrcLoc.setLongitude(tempSrc.longitude);
+                    LatLng tempDest = new LatLng(Double.parseDouble(objectInArray.getString("dest_lat")), Double.parseDouble(objectInArray.getString("dest_lng")));
+
+                    double distance = 1000.00;
+                    if (srcSetFlag)
+                        distance = (double) tempSrcLoc.distanceTo(srcLocation) / (double) 1609;
+
+                    Toast.makeText(this, "" + distance + srcSetFlag, Toast.LENGTH_LONG).show();
+
+                    if (distance <= 0.5 && count > maxCount) {
+                        dest = tempDest;
+                        maxCount = count;
+                        destSetFlag = true;
+                    }
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+
+        if (destSetFlag)
+            destinationACTextView.setText(coordinatesToAddress(dest));
+    }
+
+    private void logIn() {
         Intent signInIntent = Auth.GoogleSignInApi.getSignInIntent(mGoogleApiClient);
+
         startActivityForResult(signInIntent, RC_SIGN_IN);
     }
 
@@ -187,26 +264,18 @@ public class InputActivity extends AppCompatActivity implements GoogleApiClient.
     private void revokeAccess() {
         Auth.GoogleSignInApi.revokeAccess(mGoogleApiClient);
     }
+
     private void enable_buttons() {
         listener = new LocationListener() {
             @Override
             public void onLocationChanged(Location location) {
-                src  = new LatLng(location.getLatitude(), location.getLongitude());
-                StringBuilder builder = new StringBuilder();
-                try {
-                    List<Address> address = geocoder.getFromLocation(src.latitude, src.longitude, 1);
-                    int maxLines = address.get(0).getMaxAddressLineIndex();
-                    for (int i=0; i<maxLines; i++) {
-                        String addressStr = address.get(0).getAddressLine(i);
-                        builder.append(addressStr);
-                        builder.append(" ");
-                    }
-
-                    String finalAddress = builder.toString(); //This is the complete address.
-                    sourceACTextView.setText(finalAddress);
-                } catch (IOException e) {}
-                catch (NullPointerException e) {}
-
+                Log.d(TAG, "Flag -------------------- " + srcSetFlag);
+                if (!srcSetFlag) {
+                    src = new LatLng(location.getLatitude(), location.getLongitude());
+                    sourceACTextView.setText(coordinatesToAddress(src));
+                    srcSetFlag = true;
+                    pushNotificationCalc();
+                }
             }
 
             @Override
@@ -230,15 +299,32 @@ public class InputActivity extends AppCompatActivity implements GoogleApiClient.
         locationManager = (LocationManager) getApplicationContext().getSystemService(Context.LOCATION_SERVICE);
 
         //noinspection MissingPermission
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,10000,0,listener);
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 10000, 0, listener);
 
     }
 
+    // returns Address from latitude and longitude
+    public String coordinatesToAddress(LatLng input) {
+        StringBuilder builder = new StringBuilder();
+        try {
+            List<Address> address = geocoder.getFromLocation(input.latitude, input.longitude, 1);
+            int maxLines = address.get(0).getMaxAddressLineIndex();
+            for (int i = 0; i < maxLines; i++) {
+                String addressStr = address.get(0).getAddressLine(i);
+                builder.append(addressStr);
+                builder.append(" ");
+            }
+        } catch (IOException e) {
+        } catch (NullPointerException e) {
+        }
+
+        return new String(builder);
+    }
 
     private boolean runtime_permissions() {
-        if(Build.VERSION.SDK_INT >= 23 && ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED){
+        if (Build.VERSION.SDK_INT >= 23 && ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
 
-            requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},100);
+            requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, 100);
 
             return true;
         }
@@ -249,14 +335,15 @@ public class InputActivity extends AppCompatActivity implements GoogleApiClient.
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if(requestCode == 100){
-            if( grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED){
+        if (requestCode == 100) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
                 enable_buttons();
-            }else {
+            } else {
                 runtime_permissions();
             }
         }
     }
+
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         System.out.print("Signinbef");
@@ -267,7 +354,17 @@ public class InputActivity extends AppCompatActivity implements GoogleApiClient.
             GoogleSignInResult result = Auth.GoogleSignInApi.getSignInResultFromIntent(data);
             handleSignInResult(result);
         }
+        if (resultCode == RESULT_OK && requestCode == GPS_REQUEST) {
+            if (data.hasExtra("bundle")) {
+                Bundle bundle = getIntent().getParcelableExtra("bundle");
+                if (bundle != null) {
+                    src = bundle.getParcelable("src");
+                    Toast.makeText(this, Double.toString(src.latitude), Toast.LENGTH_LONG).show();
+                }
+            }
+        }
     }
+
 
     private void handleSignInResult(GoogleSignInResult result) {
         //If the login succeed
@@ -277,7 +374,7 @@ public class InputActivity extends AppCompatActivity implements GoogleApiClient.
 
 
             handleBackendSignIn(this, acct.getEmail(), acct.getId());
-            Toast.makeText(this, "Login Success", Toast.LENGTH_LONG).show();
+            //Toast.makeText(this, "Login Success", Toast.LENGTH_LONG).show();
 //            dummyGetWithToken(this);
 
         } else {
@@ -285,16 +382,16 @@ public class InputActivity extends AppCompatActivity implements GoogleApiClient.
             System.out.print("Failed ");
             Log.e("result", result.toString());
             Toast.makeText(this, "Login Failed!!!!!!!!" + result.toString(), Toast.LENGTH_LONG).show();
-            if(result != null)
+            if (result != null)
                 System.out.print(result.toString());
 
 //            logIn();
         }
     }
 
-    public void dummyGetWithToken(final Context context){
+    public void dummyGetWithToken(final Context context) {
         RequestQueue queue = Volley.newRequestQueue(context);
-        JsonObjectRequest req = new JsonObjectRequest(SERVER +  "/blog/", null,
+        JsonObjectRequest req = new JsonObjectRequest(BASE_URL + "/blog/", null,
                 new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject response) {
@@ -326,20 +423,20 @@ public class InputActivity extends AppCompatActivity implements GoogleApiClient.
 
     }
 
-    public void handleBackendSignIn(final Context context, final String email, final String id){
+    public void handleBackendSignIn(final Context context, final String email, final String id) {
         RequestQueue queue = Volley.newRequestQueue(context);
-        Map<String,String> params = new HashMap<String, String>();
+        Map<String, String> params = new HashMap<String, String>();
         params.put("email", email);
         params.put("uid", id);
 
-        JsonObjectRequest request_json = new JsonObjectRequest(SERVER + "/auth/register/", new JSONObject(params),
+        JsonObjectRequest request_json = new JsonObjectRequest(BASE_URL + "/auth/register/", new JSONObject(params),
                 new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject response) {
                         try {
                             //Process os success response
                             System.out.println("Posted This is the response");
-                            String token  = response.getString("token");
+                            String token = response.getString("token");
                             System.out.println(token);
                             SharedPreferences.Editor editor = getSharedPreferences(MY_PREFS, MODE_PRIVATE).edit();
                             editor.putString("authtoken", token);
@@ -360,7 +457,7 @@ public class InputActivity extends AppCompatActivity implements GoogleApiClient.
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu){
+    public boolean onCreateOptionsMenu(Menu menu) {
         super.onCreateOptionsMenu(menu);
         MenuInflater menuInflater = getMenuInflater();
         menuInflater.inflate(R.menu.toolbar, menu);
@@ -375,12 +472,13 @@ public class InputActivity extends AppCompatActivity implements GoogleApiClient.
         params.put("src_long", Double.toString(src.longitude));
         params.put("dest_lat", Double.toString(dest.latitude));
         params.put("dest_long", Double.toString(dest.longitude));
-        params.put("user_id", ""+user_id);
-        client.post(SERVER+"/history/", params, new AsyncHttpResponseHandler(){
+        params.put("user_id", "" + user_id);
+        client.post(BASE_URL + "/history/", params, new AsyncHttpResponseHandler() {
             @Override
             public void onSuccess(int statusCode, Header[] headers, byte[] response) {
                 // called when response HTTP status is "200 OK"
             }
+
             @Override
             public void onFailure(int statusCode, Header[] headers, byte[] errorResponse, Throwable e) {
                 // called when response HTTP status is "4XX" (eg. 401, 403, 404)
@@ -390,12 +488,12 @@ public class InputActivity extends AppCompatActivity implements GoogleApiClient.
 
     public void onFindRoutes(View v) {
         // remove this later
-        if(src==null)
-        src = new LatLng(33.4284307, -111.9504421);
+        if (src == null)
+            src = new LatLng(33.4284307, -111.9504421);
 
         //dest = new LatLng(33.4236, -111.9393);
-        Log.d(TAG, "----------------src :: "+src);
-        Log.d(TAG, "----------------dest :: "+dest);
+        Log.d(TAG, "----------------src :: " + src);
+        Log.d(TAG, "----------------dest :: " + dest);
         postData(src, dest, 1);
         Intent intent = new Intent(this, MapsActivity.class);
         Bundle args = new Bundle();
@@ -404,8 +502,8 @@ public class InputActivity extends AppCompatActivity implements GoogleApiClient.
         intent.putExtra("bundle", args);
 
         startActivity(intent);
-
     }
+
     //Handling Menu Item Selections
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -421,6 +519,7 @@ public class InputActivity extends AppCompatActivity implements GoogleApiClient.
                 return super.onOptionsItemSelected(item);
         }
     }
+
     public void onAlertFriend(View v) {
         System.out.println("Alerting a Friend");
         String messageAlert = "Alerting my friend";
@@ -473,7 +572,7 @@ public class InputActivity extends AppCompatActivity implements GoogleApiClient.
 */
 
         RequestQueue queue = Volley.newRequestQueue(this);
-        JsonObjectRequest req = new JsonObjectRequest(SERVER +  "/starred/", null,
+        JsonObjectRequest req = new JsonObjectRequest(BASE_URL + "/starred/", null,
                 new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject response) {
@@ -516,7 +615,7 @@ public class InputActivity extends AppCompatActivity implements GoogleApiClient.
     public void parseStarredLocationsJson(String result) {
         System.out.println("Parsing JSON - getting list of starred locations");
         JSONObject json;
-        try{
+        try {
             /*
             Format of returning json object: {"places" : [
                 {"lat":"123.43", "long":"-30.90", "place":"AddressABC"},
@@ -527,14 +626,14 @@ public class InputActivity extends AppCompatActivity implements GoogleApiClient.
             JSONArray jsonPlaces = json.getJSONArray("places");
             LatLng getLocation;
             String getAdrress;
-            if(jsonPlaces.length() > 0){
+            if (jsonPlaces.length() > 0) {
                 //Clear previous values
                 addresses.clear();
                 locations.clear();
             }
             for (int j = 0; j < jsonPlaces.length(); j++) {
                 JSONObject jsonobject = jsonPlaces.getJSONObject(j);
-                getLocation = new LatLng( Double.parseDouble(jsonobject.getString("lat")), Double.parseDouble(jsonobject.getString("lng")));
+                getLocation = new LatLng(Double.parseDouble(jsonobject.getString("lat")), Double.parseDouble(jsonobject.getString("lng")));
                 getAdrress = jsonobject.getString("name");
                 System.out.println(getLocation.toString() + "  - " + getAdrress);
                 addresses.add(getAdrress);
@@ -542,7 +641,7 @@ public class InputActivity extends AppCompatActivity implements GoogleApiClient.
             }
             Intent intent = new Intent(this, StarredLocationsActivity.class);
             startActivity(intent);
-        }catch (JSONException e) {
+        } catch (JSONException e) {
             e.printStackTrace();
         }
     }
@@ -662,8 +761,7 @@ public class InputActivity extends AppCompatActivity implements GoogleApiClient.
                 protected void publishResults(CharSequence constraint, FilterResults results) {
                     if (results != null && results.count > 0) {
                         notifyDataSetChanged();
-                    }
-                    else {
+                    } else {
                         notifyDataSetInvalidated();
                     }
                 }
@@ -672,6 +770,7 @@ public class InputActivity extends AppCompatActivity implements GoogleApiClient.
             return filter;
         }
     }
+
     @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {
 

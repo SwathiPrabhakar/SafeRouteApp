@@ -31,7 +31,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
+        Toast.makeText(getApplicationContext(), "Do Something NOW", Toast.LENGTH_LONG).show();
+/*
         //Initializing our broadcast receiver
         mRegistrationBroadcastReceiver = new BroadcastReceiver() {
 
@@ -45,10 +46,6 @@ public class MainActivity extends AppCompatActivity {
                 if(intent.getAction().equals(GCMRegistrationIntentService.REGISTRATION_SUCCESS)){
                     //Getting the registration token from the intent
                     String token = intent.getStringExtra("token");
-                    //Displaying the token as toast
-//                    Toast.makeText(getApplicationContext(), "Registration token:" + token, Toast.LENGTH_LONG).show();
-
-                    //if the intent is not with success then displaying error messages
                 } else if(intent.getAction().equals(GCMRegistrationIntentService.REGISTRATION_ERROR)){
                     Toast.makeText(getApplicationContext(), "GCM registration error!", Toast.LENGTH_LONG).show();
                 } else {
@@ -80,6 +77,7 @@ public class MainActivity extends AppCompatActivity {
             Intent itent = new Intent(this, GCMRegistrationIntentService.class);
             startService(itent);
         }
+        */
     }
 
     //Registering receiver on activity resume

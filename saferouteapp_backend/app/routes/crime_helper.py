@@ -4,6 +4,7 @@ import pandas as pd
 import pdb
 import datetime
 import multiprocessing
+import random
 
 def query(slat, slong, dlat, dlong):
     baseurl = 'https://maps.googleapis.com/maps/api/directions/json?'
@@ -30,15 +31,24 @@ def get_safe_routes(frm="33.416565,-111.925015", to="33.418000, -111.931827"):
         coords = list(set(map(lambda x: (x[u'lat'], x[u'lng']), starts + ends)))
         route_coords.append(coords)
     for i, r in enumerate(routes):
+        crimeCoords = []
         pool = multiprocessing.Pool(processes=10)
         scores = pool.map(query_crime, route_coords[i])
+        for x in route_coords[i]:
+            crimeCoords = crimeCoords + getCoords(x)
+        random.shuffle(crimeCoords)
+        lenArr = len(crimeCoords)
+        if lenArr>20:
+            lenArr = 20
+        crimeCoords = crimeCoords[0:lenArr]
         # scores = [query_crime(x) for x in route_coords[i]]
         pool.close()
         pool.join()
         print(scores)
-        routes_with_score.append({"score":sum(scores)/max(1, len(scores)), "route":r})
+        routes_with_score.append({"score":sum(scores)/max(1, len(scores)), "route":r, "crimeSpots" : crimeCoords})
     final_score = {}
     final_score["routes"] = routes_with_score
+    print final_score
     return final_score
 
 def query_crime(loc, shape='within_circle', rad=500, s_date='2015-01-01', e_date='2015-10-01', granular='ym'):
@@ -51,6 +61,15 @@ def query_crime(loc, shape='within_circle', rad=500, s_date='2015-01-01', e_date
         return int(response[0]['COUNT'])
     except:
         return 0
+
+def getCoords(loc, shape='within_circle', rad=500, s_date='2015-01-01', e_date='2015-05-30', granular='ym'):
+    # api usage reference http://www.racketracer.com/2015/10/19/most-frequented-crimes-in-san-francisco-normalized-by-neighborhood/
+    lat, lng = loc
+    print lat, lng
+    url = "https://data.sfgov.org/resource/cuks-n6tp.json?$select=location&$where=" + shape + "(location," + str(lat) + "," + str(lng) + "," + str(rad) + ") AND date>" + \
+    "'" + s_date + "' AND date<'" + e_date + "'&$limit=20"
+    response = requests.get(url).json()
+    return response
 
 # query_crime(37.757396, -122.492781)
 # q = ["37.293089, -122.213628", "37.318691, -122.088144"]

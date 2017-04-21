@@ -1,5 +1,7 @@
 package com.saferoutesapp.saferoutesapp;
 
+import android.util.Log;
+
 import com.google.android.gms.maps.model.LatLng;
 
 import org.json.JSONArray;
@@ -14,9 +16,9 @@ import java.util.List;
  * Created by ajothomas on 4/16/17.
  */
 public class DataParser {
-
+    public final String TAG = this.getClass().getSimpleName();
     /** Receives a JSONObject and returns a list of lists containing latitude and longitude */
-    public List<List<HashMap<String,String>>> parse(JSONObject jObject){
+    public List<List<HashMap<String,String>>> parse1(JSONObject jObject){
 
         List<List<HashMap<String, String>>> routes = new ArrayList<>() ;
         JSONArray jRoutes;
@@ -63,6 +65,40 @@ public class DataParser {
         return routes;
     }
 
+
+    /** Receives a JSONObject and returns a list of lists containing latitude and longitude */
+    public List<List<LatLng>> parse2(JSONObject jObject){
+
+        List<List<LatLng>> crimeCoordinates = new ArrayList<>() ;
+        JSONArray jRoutes;
+        JSONArray jCoordsArr;
+        JSONArray jCoords;
+        JSONObject jLoc;
+
+        try {
+
+            jRoutes = jObject.getJSONArray("routes");
+            Log.d(TAG, "------**********--------"+jRoutes.length());
+            /** Traversing all routes */
+            for(int i=0;i<jRoutes.length();i++){
+                jCoordsArr = (JSONArray) ((JSONObject)jRoutes.get(i)).getJSONArray("crimeSpots");
+
+                List<LatLng> tempCoords = new ArrayList<>();
+                for(int j=0;j<jCoordsArr.length();j++){
+                    jLoc = (JSONObject) ((JSONObject)jCoordsArr.get(j)).getJSONObject("location");
+                    Log.d(TAG, "-------"+j+"-------"+jLoc.toString());
+                    jCoords = (JSONArray) jLoc.getJSONArray("coordinates");
+                    tempCoords.add(new LatLng((Double) jCoords.get(1), (Double) jCoords.get(0)));
+                }
+                crimeCoordinates.add(tempCoords);
+            }
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }catch (Exception e){
+        }
+        return crimeCoordinates;
+    }
 
     /**
      * Method to decode polyline points

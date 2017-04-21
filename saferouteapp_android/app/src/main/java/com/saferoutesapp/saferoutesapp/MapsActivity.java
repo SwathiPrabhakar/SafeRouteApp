@@ -6,7 +6,6 @@ import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Address;
 import android.location.Geocoder;
-import android.location.Location;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.support.v4.app.ActivityCompat;
@@ -14,13 +13,11 @@ import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 
 import com.android.volley.AuthFailureError;
-import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.VolleyLog;
 import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.android.gms.appindexing.Action;
 import com.google.android.gms.appindexing.AppIndex;
@@ -30,6 +27,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -40,7 +38,6 @@ import android.location.LocationListener;
 import android.util.Log;
 import android.widget.Toast;
 
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
@@ -54,8 +51,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import com.google.android.gms.maps.GoogleMap.OnMapClickListener;
 
+import com.google.android.gms.maps.GoogleMap.OnMapClickListener;
 
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener, OnMapClickListener, GlobalConst {
@@ -67,7 +64,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     ArrayList<LatLng> MarkerPoints;
     public String starredLocationEnabled = "false";
     public static final String MY_PREFS = "saferoutes";
-    public static final String BASE_URL = "http://753ac14f.ngrok.io";
 
     /**
      * ATTENTION: This was auto-generated to implement the App Indexing API.
@@ -83,42 +79,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         LatLng dest = null;
         Bundle bundle = getIntent().getParcelableExtra("bundle");
         MarkerPoints = new ArrayList<>();
-        if(bundle != null){
-             src = bundle.getParcelable("src");
-             dest = bundle.getParcelable("dest");
+        if (bundle != null) {
+            src = bundle.getParcelable("src");
+            dest = bundle.getParcelable("dest");
             MarkerPoints.add(src);
             MarkerPoints.add(dest);
         }
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-        locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-        //Location loc = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-
-        locationListener = new LocationListener() {
-            @Override
-            public void onLocationChanged(Location location) {
-                LatLng sydney = new LatLng(location.getLatitude(), location.getLongitude());
-                mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
-                mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
-            }
-
-            @Override
-            public void onStatusChanged(String provider, int status, Bundle extras) {
-
-            }
-
-            @Override
-            public void onProviderEnabled(String provider) {
-
-            }
-
-            @Override
-            public void onProviderDisabled(String provider) {
-
-            }
-        };
 
         //locationManager.requestLocationUpdates("gps", 0, 0, locationListener);
-
 
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
@@ -134,6 +102,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
             }
         }
+
 
     }
 
@@ -151,7 +120,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
         mMap.setOnMapClickListener(this);
-        if(!MarkerPoints.isEmpty()){
+        if (!MarkerPoints.isEmpty()) {
             LatLng src = MarkerPoints.get(0);
             LatLng dest = MarkerPoints.get(1);
             mMap.addMarker(new MarkerOptions().position(src));
@@ -168,6 +137,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             mMap.moveCamera(CameraUpdateFactory.newLatLng(src));
             mMap.animateCamera(CameraUpdateFactory.zoomTo(11));
             mMap.setMyLocationEnabled(true);
+            mMap.setTrafficEnabled(true);
         }
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             return;
@@ -198,7 +168,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         System.out.println(markerTitle);
         mMap.addMarker(new MarkerOptions().position(latLng).title(markerTitle));
         mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
-        Map<String,String> params = new HashMap<String, String>();
+        Map<String, String> params = new HashMap<String, String>();
         if (latLng != null) {
             params.put("lat", Double.toString(latLng.latitude));
             params.put("lng", Double.toString(latLng.longitude));
@@ -224,7 +194,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             public void onErrorResponse(VolleyError error) {
                 VolleyLog.e("Error: ", error.getMessage());
             }
-        }){
+        }) {
             public Map<String, String> getHeaders() throws AuthFailureError {
                 HashMap<String, String> headers = new HashMap<String, String>();
                 SharedPreferences prefs = getSharedPreferences(MY_PREFS, MODE_PRIVATE);
@@ -266,11 +236,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         protected void onPostExecute(String result) {
 
             super.onPostExecute(result);
-            Log.d(TAG, "------****"+result);
+            Log.d(TAG, "------****" + result);
             ParserTask parserTask = new ParserTask();
+            ParserTask1 parserTask1 = new ParserTask1();
 
             // Invokes the thread for parsing the JSON data
             parserTask.execute(result);
+            parserTask1.execute(result);
 
         }
     }
@@ -301,7 +273,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
 
             data = sb.toString();
-            Log.d("downloadUrl", data.toString());
             br.close();
 
         } catch (Exception e) {
@@ -314,8 +285,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     /**
-     * A class to parse the Google Places in JSON format
-     myMap.setTrafficEnabled(true);
+     * Plotting the routes
      */
     private class ParserTask extends AsyncTask<String, Integer, List<List<HashMap<String, String>>>> {
 
@@ -329,15 +299,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             try {
                 jObject = new JSONObject(jsonData[0]);
                 DataParser parser = new DataParser();
-                Log.d("ParserTask", parser.toString());
 
                 // Starts parsing data
-                routes = parser.parse(jObject);
-                Log.d("ParserTask","Executing routes");
-                Log.d("ParserTask",routes.toString());
+                routes = parser.parse1(jObject);
 
             } catch (Exception e) {
-                Log.d("ParserTask",e.toString());
+                Log.d("ParserTask", e.toString());
                 e.printStackTrace();
             }
             return routes;
@@ -352,38 +319,85 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
             // Traversing through all the routes
            /* for (int i = 0; i < result.size(); i++) {*/
-                points = new ArrayList<>();
-                lineOptions = new PolylineOptions();
+            points = new ArrayList<>();
+            lineOptions = new PolylineOptions();
+            if (result != null) {
+                if (result.size() > 0) {
+                    // Fetching i-th route
+                    List<HashMap<String, String>> path = result.get(0);
 
-                // Fetching i-th route
-                List<HashMap<String, String>> path = result.get(0);
+                    // Fetching all the points in i-th route
+                    for (int j = 0; j < path.size(); j++) {
+                        HashMap<String, String> point = path.get(j);
 
-                // Fetching all the points in i-th route
-                for (int j = 0; j < path.size(); j++) {
-                    HashMap<String, String> point = path.get(j);
+                        double lat = Double.parseDouble(point.get("lat"));
+                        double lng = Double.parseDouble(point.get("lng"));
+                        LatLng position = new LatLng(lat, lng);
 
-                    double lat = Double.parseDouble(point.get("lat"));
-                    double lng = Double.parseDouble(point.get("lng"));
-                    LatLng position = new LatLng(lat, lng);
+                        points.add(position);
+                    }
 
-                    points.add(position);
+                    // Adding all the points in the route to LineOptions
+                    lineOptions.addAll(points);
+                    lineOptions.width(20);
+                    lineOptions.color(Color.argb(192, 21, 153, 219));
+
+                    Log.d("onPostExecute", "onPostExecute lineoptions decoded");
+
+                    // }
+
+                    // Drawing polyline in the Google Map for the i-th route
+                    if (lineOptions != null) {
+                        mMap.addPolyline(lineOptions);
+
+                    } else {
+                        Log.d("onPostExecute", "without Polylines drawn");
+                    }
                 }
-
-                // Adding all the points in the route to LineOptions
-                lineOptions.addAll(points);
-                lineOptions.width(15);
-                lineOptions.color(Color.argb(192, 21, 153, 219));
-
-                Log.d("onPostExecute","onPostExecute lineoptions decoded");
-
-           // }
-
-            // Drawing polyline in the Google Map for the i-th route
-            if(lineOptions != null) {
-                mMap.addPolyline(lineOptions);
             }
-            else {
-                Log.d("onPostExecute","without Polylines drawn");
+        }
+    }
+
+    /**
+     * Plotting the routes
+     */
+    private class ParserTask1 extends AsyncTask<String, Integer, List<List<LatLng>>> {
+
+        // Parsing the data in non-ui thread
+        @Override
+        protected List<List<LatLng>> doInBackground(String... jsonData) {
+
+            JSONObject jObject;
+            List<List<LatLng>> crimeSpots = null;
+
+            try {
+                jObject = new JSONObject(jsonData[0]);
+                DataParser parser = new DataParser();
+
+                // Starts parsing data
+                crimeSpots = parser.parse2(jObject);
+
+            } catch (Exception e) {
+                Log.d("ParserTask", e.toString());
+                e.printStackTrace();
+            }
+            return crimeSpots;
+        }
+
+        // Executes in UI thread, after the parsing process
+        @Override
+        protected void onPostExecute(List<List<LatLng>> result) {
+
+            if (result != null) {
+                if (result.size() > 0) {
+                    List<LatLng> crimeCoords = result.get(0);
+
+                    for (int j = 0; j < crimeCoords.size(); j++) {
+                        mMap.addMarker(new MarkerOptions()
+                                .position(crimeCoords.get(j))
+                                .icon(BitmapDescriptorFactory.fromResource(R.drawable.crime_image)));
+                    }
+                }
             }
         }
     }
@@ -401,7 +415,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         // Building the url to the web service
         //http://127.0.0.1:5000/routes/?frm=33.416565,-111.925015&to=33.418000, -111.931827
-        String url = SERVER + "/routes?" + parameters;
+        String url = BASE_URL + "/routes?" + parameters;
         //return "http://ziptasticapi.com/85281";
         return url;
     }

@@ -1,10 +1,13 @@
 import flask
+from flask_apscheduler import APScheduler
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask_restful import Api
 from flask.ext.restful import abort
 from flask.ext.migrate import Migrate
 from flask.ext.cors import CORS
 import googlemaps
+import sys
+from apscheduler.schedulers.background import BackgroundScheduler
 
 app = flask.Flask(__name__)
 app.config.from_object('config')
@@ -27,6 +30,7 @@ from app.pages.resources import page_bp
 from app.routes.resources import route_bp
 from app.starred.resources import starred_bp
 from app.history.resources import history_bp
+from app.history.resources import test_scheduler
 
 app.register_blueprint(
     blog_bp,
@@ -57,3 +61,7 @@ app.register_blueprint(
     history_bp,
     url_prefix='/history'
 )
+
+sched = BackgroundScheduler(timezone='MST')
+sched.add_job(test_scheduler, 'interval', id='my_job_id', seconds=60)
+sched.start()
