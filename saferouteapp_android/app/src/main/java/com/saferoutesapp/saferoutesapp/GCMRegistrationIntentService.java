@@ -28,7 +28,7 @@ public class GCMRegistrationIntentService extends IntentService {
     public static final String REGISTRATION_SUCCESS = "RegistrationSuccess";
     public static final String REGISTRATION_ERROR = "RegistrationError";
     public static final String MY_PREFS = "saferoutes";
-    public static final String BASE_URL = "http://261eea5d.ngrok.io";
+    public static final String BASE_URL = "http://753ac14f.ngrok.io";
 
     //Class constructor
     public GCMRegistrationIntentService() {

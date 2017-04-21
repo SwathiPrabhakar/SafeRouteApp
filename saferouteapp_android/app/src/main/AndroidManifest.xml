@@ -54,6 +54,10 @@
             android:name=".StarredLocationsActivity"
             android:label="Starred Locations">
         </activity>
+        <activity
+            android:name=".ProfilePage"
+            android:label="My Profile">
+        </activity>
 
         <meta-data
             android:name="com.google.android.gms.version"
