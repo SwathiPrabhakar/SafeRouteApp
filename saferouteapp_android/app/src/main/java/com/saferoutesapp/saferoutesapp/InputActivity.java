@@ -17,6 +17,7 @@ import android.os.Bundle;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.net.TrafficStatsCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -73,9 +74,11 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 import cz.msebera.android.httpclient.Header;
 import cz.msebera.android.httpclient.HttpEntity;
@@ -112,6 +115,9 @@ public class InputActivity extends AppCompatActivity implements GoogleApiClient.
     public static final String MY_PREFS = "saferoutes";
 
     public static String current_location = null;
+    public static ArrayList<String> evenText = new ArrayList<String>();
+    public static ArrayList<String> fullDesc = new ArrayList<String>();
+
     //google api client
     private GoogleApiClient mGoogleApiClient;
 
@@ -440,8 +446,54 @@ public class InputActivity extends AppCompatActivity implements GoogleApiClient.
                 return super.onOptionsItemSelected(item);
         }
     }
-
     private void generateNearByTrafficIncidents() {
+            RequestQueue queue = Volley.newRequestQueue(this);
+            JsonObjectRequest req = new JsonObjectRequest("https://www.mapquestapi.com/traffic/v2/incidents?&outFormat=json&boundingBox=37.872143313118876%2C-122.1895980834961%2C37.68789577951547%2C-122.65102386474608&key=lYrP4vF3Uk5zgTiGGuEzQGwGIVDGuy24", null,
+                    new Response.Listener<JSONObject>() {
+                        @Override
+                        public void onResponse(JSONObject response) {
+                            try {
+                                VolleyLog.v("Response:%n %s", response.toString(4));
+                                parseNearByTrafficIncidentsJSON(response.toString());
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }, new Response.ErrorListener() {
+                @Override
+                public void onErrorResponse(VolleyError error) {
+                    VolleyLog.e("Error: ", error.getMessage());
+                }
+            });
+            queue.add(req);
+    }
+
+    public void parseNearByTrafficIncidentsJSON(String result){
+            //using eventText and fulldesc
+            System.out.println("Parsing JSON - getting list of nearby traffic incidents locations");
+            JSONObject json;
+            try{
+                json = new JSONObject(result);
+                JSONArray jsonIncidents = json.getJSONArray("incidents");
+                for (int j = 0; j < jsonIncidents.length(); j++) {
+                    JSONObject jsonobject = jsonIncidents.getJSONObject(j);
+                    JSONObject description  = jsonobject.getJSONObject("parameterizedDescription");
+                    System.out.println(description.get("eventText").toString());
+                    evenText.add(j, description.get("eventText").toString());
+                    fullDesc.add(jsonobject.get("fullDesc").toString());
+                }
+                SharedPreferences.Editor editorProfile = getSharedPreferences(MY_PREFS, MODE_PRIVATE).edit();
+                Set<String> set = new HashSet<String>();
+                set.addAll(fullDesc);
+                System.out.println("here");
+                editorProfile.putStringSet("fullDesc", set);
+                editorProfile.commit();
+
+            }catch (JSONException e) {
+                e.printStackTrace();
+            }
+        Intent intent = new Intent(this, TrafficIncident.class);
+        startActivity(intent);
     }
 
     private void openProfilePage() {
@@ -473,25 +525,6 @@ public class InputActivity extends AppCompatActivity implements GoogleApiClient.
     }
 
     private void parseStarredLocations() {
-
-/*
-        RequestQueue queue = Volley.newRequestQueue(this);
-        StringRequest stringRequest = new StringRequest(Request.Method.GET, "https://api.myjson.com/bins/m68r3",
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        parseStarredLocationsJson(response);
-                    }
-                }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                System.out.println(error.toString());
-                System.out.println(error.getMessage());
-            }
-        });
-        // Add the request to the RequestQueue.
-        queue.add(stringRequest);
-*/
 
         RequestQueue queue = Volley.newRequestQueue(this);
         JsonObjectRequest req = new JsonObjectRequest(SERVER +  "/starred/", null,
@@ -533,6 +566,7 @@ public class InputActivity extends AppCompatActivity implements GoogleApiClient.
         intent.putExtra("starredLocationEnabled", "set");
         startActivity(intent);
     }
+
 
     public void parseStarredLocationsJson(String result) {
         System.out.println("Parsing JSON - getting list of starred locations");

@@ -55,6 +55,10 @@
             android:label="Starred Locations">
         </activity>
         <activity
+            android:name=".TrafficIncident"
+            android:label="Nearby Traffic Incidents">
+        </activity>
+        <activity
             android:name=".ProfilePage"
             android:label="My Profile">
         </activity>
