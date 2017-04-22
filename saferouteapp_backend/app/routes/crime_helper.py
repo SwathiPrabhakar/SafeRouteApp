@@ -45,7 +45,7 @@ def get_safe_routes(frm="33.416565,-111.925015", to="33.418000, -111.931827"):
         pool.close()
         pool.join()
         print(scores)
-        routes_with_score.append({"score_each": scores, "score":sum(scores)/max(1, len(scores)), "route":r})
+        routes_with_score.append({"score_each": scores, "score":sum(scores)/max(1, len(scores)), "route":r, "crimeSpots": crimeCoords})
     final_score = {}
     final_score["routes"] = routes_with_score
     print final_score

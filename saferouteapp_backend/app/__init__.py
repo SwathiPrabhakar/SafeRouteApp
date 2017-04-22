@@ -14,7 +14,7 @@ app.config.from_object('config')
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
-key = 'AIzaSyDmNBpYDBoxkwYTW5Aw9H3YrEXaSi-tnAo'
+key = 'AIzaSyCOs74qA9ySSKcx6itspX_K8RPzVGinFmA'
 gmaps = googlemaps.Client(key=key)
 
 CORS(app, resources=r'/*', allow_headers='*')
