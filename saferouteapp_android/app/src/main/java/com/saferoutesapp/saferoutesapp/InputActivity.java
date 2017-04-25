@@ -54,11 +54,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.auth.api.signin.GoogleSignInResult;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.location.places.Place;
-import com.google.android.gms.location.places.PlaceBuffer;
-import com.google.android.gms.location.places.Places;
 import com.google.android.gms.maps.model.LatLng;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.AsyncHttpResponseHandler;
@@ -279,7 +275,6 @@ public class InputActivity extends AppCompatActivity implements GoogleApiClient.
         listener = new LocationListener() {
             @Override
             public void onLocationChanged(Location location) {
-                Log.d(TAG, "Flag -------------------- " + srcSetFlag);
                 if (!srcSetFlag) {
                     src = new LatLng(location.getLatitude(), location.getLongitude());
                     String finalAddress = coordinatesToAddress(src);
@@ -517,7 +512,8 @@ public class InputActivity extends AppCompatActivity implements GoogleApiClient.
         //dest = new LatLng(33.4236, -111.9393);
         Log.d(TAG, "----------------src :: " + src);
         Log.d(TAG, "----------------dest :: " + dest);
-        postData(src, dest, 1);
+        // this call stores the src and destination for the given user
+        // postData(src, dest, 1);
         Intent intent = new Intent(this, MapsActivity.class);
         Bundle args = new Bundle();
         args.putParcelable("src", src);
@@ -761,8 +757,6 @@ public class InputActivity extends AppCompatActivity implements GoogleApiClient.
         private static final String TYPE_AUTOCOMPLETE = "/autocomplete";
         private static final String OUT_JSON = "/json";
 
-        private static final String API_KEY = "AIzaSyDmNBpYDBoxkwYTW5Aw9H3YrEXaSi-tnAo";
-
         public ArrayList<String> autocomplete(String input) {
             ArrayList<String> resultList = null;
 
@@ -771,7 +765,7 @@ public class InputActivity extends AppCompatActivity implements GoogleApiClient.
 
             try {
                 StringBuilder sb = new StringBuilder(PLACES_API_BASE + TYPE_AUTOCOMPLETE + OUT_JSON);
-                sb.append("?key=" + API_KEY);
+                sb.append("?key=" + PLACES_API_KEY);
                 sb.append("&types=geocode");
                 sb.append("&input=" + URLEncoder.encode(input, "utf8"));
 

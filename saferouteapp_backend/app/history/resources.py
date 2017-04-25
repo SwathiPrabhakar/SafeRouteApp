@@ -29,6 +29,7 @@ class HistoryStore(Resource):
     @use_kwargs(add_args)
     def post(self, src_lat, src_long, dest_lat, dest_long, user_id):
         # todo store and verify uid 
+
         record = History(
         	src_lat,
         	src_long,
@@ -94,6 +95,9 @@ def test_scheduler():
         # Hardcode source locations for testing push notfications
         # Home : 33.4284328,-111.9501358
         # Nobel Library : 33.4201427,-111.9285955
-        finalObj = { "result" : [ {"count": 3, "src_lat" : "33.4201427", "src_lng" : "-111.9285955", "dest_lat" : "33.415661", "dest_lng" : "-111.931986"}, {"count": 7, "src_lat" : "33.4201427", "src_lng" : "-111.9285955", "dest_lat" : "33.4235668", "dest_lng" : "-111.9392688"} ] }
+        #### dummy data to test notifications ####
+        src_lat =  "33.4284328" # replace with your current location latitude
+        src_lng =  "-111.9501358" # replace with your current location longitude
+        finalObj = { "result" : [ {"count": 3, "src_lat" : src_lat, "src_lng" : src_lng, "dest_lat" : "33.415661", "dest_lng" : "-111.931986"}, {"count": 7, "src_lat" : src_lat, "src_lng" : src_lng, "dest_lat" : "33.4235668", "dest_lng" : "-111.9392688"} ] }
+        print finalObj
         response = gcm.json_request(registration_ids = registration_ids, data = { "message" : finalObj} )
-        
