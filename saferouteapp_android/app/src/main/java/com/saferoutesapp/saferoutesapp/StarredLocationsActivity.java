@@ -38,6 +38,7 @@ import static com.saferoutesapp.saferoutesapp.R.id.place_autocomplete_search_but
 public class StarredLocationsActivity extends AppCompatActivity {
     static ArrayAdapter arrayAdapter;
 
+    //################### TASK-16: Frontend of Create & View Star Location ################
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.starred_locations);

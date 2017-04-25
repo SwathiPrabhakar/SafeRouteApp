@@ -14,6 +14,11 @@ import com.android.volley.toolbox.NetworkImageView;
  * Created by avniv on 4/20/2017.
  */
 
+//################### TASK-18: My Profile and Social Media​-  ################
+/*
+    Note: We are susing personal website as share link as application is not public yet!
+     */
+
 public class ProfilePage extends AppCompatActivity {
     //TextViews
     private TextView textViewName;
@@ -61,6 +66,7 @@ public class ProfilePage extends AppCompatActivity {
             i.setType("text/plain");
             i.putExtra(Intent.EXTRA_SUBJECT, "SafeRoutes");
             String sAux = "\nLet me recommend you this application\n\n";
+
             sAux = sAux + "http://asahoo.me/ \n\n";
             i.putExtra(Intent.EXTRA_TEXT, sAux);
             startActivity(Intent.createChooser(i, "Choose Option"));

@@ -4,7 +4,9 @@ package com.saferoutesapp.saferoutesapp;
  * Created by amrit on 4/16/17.
  */
 
-//# Reference https://www.simplifiedcoding.net/android-push-notification-using-gcm-tutorial/
+/*
+* Reference https://www.simplifiedcoding.net/android-push-notification-using-gcm-tutorial/
+ */
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;

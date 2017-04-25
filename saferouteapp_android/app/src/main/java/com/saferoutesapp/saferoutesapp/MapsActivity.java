@@ -176,35 +176,34 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             params.put("lat", Double.toString(0.0));
             params.put("lng", Double.toString(0.0));
         }
-        /*
-        Send Post Request to Backend
-        {"place":{"lat":"37.4220","long":"-122.0841"}}
-         */
-
-        RequestQueue queue = Volley.newRequestQueue(this);
-        JsonObjectRequest request_json = new JsonObjectRequest(BASE_URL + "/starred/", new JSONObject(params),
-                new Response.Listener<JSONObject>() {
-                    @Override
-                    public void onResponse(JSONObject response) {
-                        //Process os success response
-                        System.out.println("Posted latitude longitude respose on starred location" + response.toString());
-                    }
-                }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                VolleyLog.e("Error: ", error.getMessage());
-            }
-        }) {
-            public Map<String, String> getHeaders() throws AuthFailureError {
-                HashMap<String, String> headers = new HashMap<String, String>();
-                SharedPreferences prefs = getSharedPreferences(MY_PREFS, MODE_PRIVATE);
-                String token = prefs.getString("authtoken", null);
-                System.out.print(token.toString());
-                headers.put("Authorization", "Token " + token);
-                return headers;
-            }
-        };
-        queue.add(request_json);
+        System.out.println(starredLocationEnabled);
+        Toast.makeText(this, "Location Saved!", Toast.LENGTH_SHORT).show();
+        if(starredLocationEnabled.equals("set")){
+            RequestQueue queue = Volley.newRequestQueue(this);
+            JsonObjectRequest request_json = new JsonObjectRequest(BASE_URL + "/starred/", new JSONObject(params),
+                    new Response.Listener<JSONObject>() {
+                        @Override
+                        public void onResponse(JSONObject response) {
+                            //Process os success response
+                            System.out.println("Posted latitude longitude respose on starred location" + response.toString());
+                        }
+                    }, new Response.ErrorListener() {
+                @Override
+                public void onErrorResponse(VolleyError error) {
+                    VolleyLog.e("Error: ", error.getMessage());
+                }
+            }) {
+                public Map<String, String> getHeaders() throws AuthFailureError {
+                    HashMap<String, String> headers = new HashMap<String, String>();
+                    SharedPreferences prefs = getSharedPreferences(MY_PREFS, MODE_PRIVATE);
+                    String token = prefs.getString("authtoken", null);
+                    System.out.print(token.toString());
+                    headers.put("Authorization", "Token " + token);
+                    return headers;
+                }
+            };
+            queue.add(request_json);
+        }
     }
 
     @Override

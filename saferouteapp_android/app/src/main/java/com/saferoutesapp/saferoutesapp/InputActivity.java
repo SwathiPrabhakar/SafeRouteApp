@@ -120,6 +120,7 @@ public class InputActivity extends AppCompatActivity implements GoogleApiClient.
     private boolean destSetFlag = false;
     private Location srcLocation;
     public static String current_location = null;
+    public static LatLng current_location_lat_long= null;
     public static ArrayList<String> evenText = new ArrayList<String>();
     public static ArrayList<String> fullDesc = new ArrayList<String>();
 
@@ -158,6 +159,7 @@ public class InputActivity extends AppCompatActivity implements GoogleApiClient.
             src = new LatLng(33.4201427,-111.9285955);
             srcSetFlag = true;
             sourceACTextView.setText(coordinatesToAddress(src));
+            destinationACTextView.setText(coordinatesToAddress(src));
         }
             // Using push notification to get the destination
             Bundle bundleGCM = getIntent().getExtras();
@@ -282,6 +284,7 @@ public class InputActivity extends AppCompatActivity implements GoogleApiClient.
                     src = new LatLng(location.getLatitude(), location.getLongitude());
                     String finalAddress = coordinatesToAddress(src);
                     current_location = finalAddress;
+                    current_location_lat_long = src ;
                     sourceACTextView.setText(finalAddress);
                     srcSetFlag = true;
                     pushNotificationCalc();
@@ -354,6 +357,7 @@ public class InputActivity extends AppCompatActivity implements GoogleApiClient.
         }
     }
 
+    //################### TASK-1: Front end of Authentication Layer Backend and Android ################
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         System.out.print("Signinbef");
@@ -532,12 +536,15 @@ public class InputActivity extends AppCompatActivity implements GoogleApiClient.
                 addStarredLocation();
                 return true;
             case R.id.listStarredLocations:
+                //################### TASK-16: Frontend of Create & View Star Location ################
                 parseStarredLocations();
                 return true;
             case R.id.nearByTrafficIncidents:
+                //################### TASK-17: Traffic Incidents  ################
                 generateNearByTrafficIncidents();
                 return true;
             case R.id.myProfile:
+                //################### TASK-18: My Profile and Social Media​-  ################
                 openProfilePage();
                 return true;
             default:
@@ -545,9 +552,42 @@ public class InputActivity extends AppCompatActivity implements GoogleApiClient.
         }
     }
 
+    private String get_traffic_url(LatLng current_lat_long){
+        String traffic_url = null;
+        //Personal key: lYrP4vF3Uk5zgTiGGuEzQGwGIVDGuy24
+        traffic_url = "https://www.mapquestapi.com/traffic/v2/incidents?&outFormat=json&key=lYrP4vF3Uk5zgTiGGuEzQGwGIVDGuy24&boundingBox=";
+        if(current_lat_long !=null){
+            Double x1 = current_lat_long.latitude - BOUNDING_BOX_SIZE;
+            Double x2 = current_lat_long.latitude + BOUNDING_BOX_SIZE;
+            Double y1 = current_lat_long.longitude - BOUNDING_BOX_SIZE;
+            Double y2 = current_lat_long.longitude + BOUNDING_BOX_SIZE;
+            traffic_url += x2.toString() + "," + y2.toString() + "," + x1.toString() + "," + y1.toString();
+        }
+        else{
+            /* Server takes few seconds to set current_location
+             * That is why current_location is set to cidese(BrickYard) location -(33.423567, -111.939269)
+             */
+
+            Double x1 = BYAC_LOC.latitude - BOUNDING_BOX_SIZE;
+            Double x2 = BYAC_LOC.latitude + BOUNDING_BOX_SIZE;
+            Double y1 = BYAC_LOC.longitude - BOUNDING_BOX_SIZE;
+            Double y2 = BYAC_LOC.longitude + BOUNDING_BOX_SIZE;
+            traffic_url += x2.toString() + "," + y2.toString() + "," + x1.toString() + "," + y1.toString();
+        }
+        System.out.println(traffic_url);
+        return traffic_url;
+
+    }
+    //################### TASK-17: Traffic Incidents  ################
     private void generateNearByTrafficIncidents() {
             RequestQueue queue = Volley.newRequestQueue(this);
-            JsonObjectRequest req = new JsonObjectRequest("https://www.mapquestapi.com/traffic/v2/incidents?&outFormat=json&boundingBox=37.872143313118876%2C-122.1895980834961%2C37.68789577951547%2C-122.65102386474608&key=lYrP4vF3Uk5zgTiGGuEzQGwGIVDGuy24", null,
+
+            String traffic_url = get_traffic_url(current_location_lat_long);
+
+            /*
+                    Reference: https://developer.mapquest.com/documentation/traffic-api/incidents/get/
+                     */
+            JsonObjectRequest req = new JsonObjectRequest(traffic_url, null,
                     new Response.Listener<JSONObject>() {
                         @Override
                         public void onResponse(JSONObject response) {
@@ -595,12 +635,14 @@ public class InputActivity extends AppCompatActivity implements GoogleApiClient.
         startActivity(intent);
     }
 
+    //################### TASK-18: My Profile and Social Media​-  ################
     private void openProfilePage() {
         //Satrting profile page activity
         Intent intent = new Intent(this, ProfilePage.class);
         startActivity(intent);
     }
 
+    //################### TASK-15: Alert a friend ################
     public void onAlertFriend(View v) {
         System.out.println("Alerting a Friend");
         String messageAlert = "Alerting my friend...";
@@ -660,6 +702,7 @@ public class InputActivity extends AppCompatActivity implements GoogleApiClient.
 
     }
 
+    //################### TASK-14: Front end of Star a Location and Rest API ################
     private void addStarredLocation() {
         Intent intent = new Intent(this, MapsActivity.class);
         intent.putExtra("starredLocationEnabled", "set");
@@ -686,13 +729,19 @@ public class InputActivity extends AppCompatActivity implements GoogleApiClient.
                 addresses.clear();
                 locations.clear();
             }
-            for (int j = 0; j < jsonPlaces.length(); j++) {
-                JSONObject jsonobject = jsonPlaces.getJSONObject(j);
+            int count = Math.min(LIST_STARRED_LOCATIONS_LIMIT, jsonPlaces.length());
+            int index = jsonPlaces.length();
+            System.out.println(jsonPlaces.length());
+            while(count >0){
+                JSONObject jsonobject = jsonPlaces.getJSONObject(index-1);
+                System.out.println(index-1);
                 getLocation = new LatLng(Double.parseDouble(jsonobject.getString("lat")), Double.parseDouble(jsonobject.getString("lng")));
                 getAdrress = jsonobject.getString("name");
                 System.out.println(getLocation.toString() + "  - " + getAdrress);
                 addresses.add(getAdrress);
                 locations.add(getLocation);
+                count--;
+                index--;
             }
             Intent intent = new Intent(this, StarredLocationsActivity.class);
             startActivity(intent);

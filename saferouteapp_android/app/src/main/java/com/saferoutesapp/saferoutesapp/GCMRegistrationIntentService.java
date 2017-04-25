@@ -22,7 +22,11 @@ import org.json.JSONObject;
 
 import java.util.HashMap;
 import java.util.Map;
+/*
+* Reference :https://code.tutsplus.com/tutorials/how-to-get-started-with-push-notifications-on-android--cms-25870
+ */
 
+//################### TASK-19: Push notification Service-  ################
 public class GCMRegistrationIntentService extends IntentService implements GlobalConst {
     //Constants for success and errors
     public static final String REGISTRATION_SUCCESS = "RegistrationSuccess";
