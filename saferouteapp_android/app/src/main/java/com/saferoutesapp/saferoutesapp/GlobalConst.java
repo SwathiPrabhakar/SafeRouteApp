@@ -7,7 +7,8 @@ import com.google.android.gms.maps.model.LatLng;
  */
 
 public interface GlobalConst {
-    public static final String BASE_URL = "http://3359ecc7.ngrok.io";
+//    public static final String BASE_URL = "http://3359ecc7.ngrok.io";
+    public static final String BASE_URL = "http://107.170.11.225:5000/";
     public static final String PLACES_API_KEY = "AIzaSyCOs74qA9ySSKcx6itspX_K8RPzVGinFmA";
     public static final String API_KEY = "AIzaSyDmNBpYDBoxkwYTW5Aw9H3YrEXaSi-tnAo";
 
